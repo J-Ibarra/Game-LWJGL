@@ -14,7 +14,7 @@ import static org.lwjgl.opengl.GL20.*;
  * Created by Jcs on 18/8/2016.
  */
 public class ShaderProgram {
-    private final int programId;
+    public final int programId;
     private int vsId;
     private int fsId;
 
@@ -38,12 +38,14 @@ public class ShaderProgram {
     public void link() throws Exception {
         glLinkProgram(programId);
         if (glGetProgrami(programId, GL_LINK_STATUS) == GL_FALSE) {
-            throw new RuntimeException("Error linking shader, log: " + glGetShaderInfoLog(programId));
+            throw new RuntimeException("Error linking shader, log: " + glGetShaderInfoLog(vsId) + " " +
+                    glGetShaderInfoLog(fsId));
         }
 
         glValidateProgram(programId);
         if (glGetProgrami(programId, GL_VALIDATE_STATUS) == GL_FALSE) {
-            throw new RuntimeException("Warning validating shader, log: " + glGetShaderInfoLog(programId));
+            throw new RuntimeException("Warning validating shader, log: " + glGetShaderInfoLog(vsId) + " " +
+                    glGetShaderInfoLog(fsId));
         }
 
     }

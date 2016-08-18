@@ -1,18 +1,19 @@
 package com.jcs;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
-import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
+import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -27,7 +28,7 @@ public class Main {
 
     ShaderProgram shaderProgram;
 
-    int VBO, VAO;
+    int COUNT, VBO, VAO, EBO;
 
     private void init() throws Exception {
         shaderProgram = new ShaderProgram();
@@ -37,28 +38,50 @@ public class Main {
 
 
         float[] vertices = new float[]{
-                -0.5f, -0.5f, 0.0f,
-                0.5f, -0.5f, 0.0f,
-                0.0f, 0.5f, 0.0f
+                0.5f, 0.5f, 0.0f,  // Top Right
+                0.5f, -0.5f, 0.0f,  // Bottom Right
+                -0.5f, -0.5f, 0.0f,  // Bottom Left
+                -0.5f, 0.5f, 0.0f   // Top Left
         };
+
+        int[] indices = new int[]{  // Note that we start from 0!
+                0, 1, 3,   // First Triangle
+                1, 2, 3    // Second Triangle
+        };
+
+        COUNT = indices.length;
 
         VAO = glGenVertexArrays();
         glBindVertexArray(VAO);
 
         VBO = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        FloatBuffer fb = org.lwjgl.BufferUtils.createFloatBuffer(vertices.length);
+        FloatBuffer fb = BufferUtils.createFloatBuffer(vertices.length);
         fb.put(vertices).flip();
         glBufferData(GL_ARRAY_BUFFER, fb, GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
         glEnableVertexAttribArray(0);
 
+        EBO = glGenBuffers();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        IntBuffer ib = BufferUtils.createIntBuffer(indices.length);
+        ib.put(indices).flip();
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, ib, GL_STATIC_DRAW);
+
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     private void update() {
-
+        double timeValue = glfwGetTime();
+        float greenValue = (float) (Math.sin(timeValue) / 2f) + 0.5f;
+        int vertexColorLocation = glGetUniformLocation(shaderProgram.programId, "ourColor");
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
     }
 
     private void render() {
@@ -66,7 +89,8 @@ public class Main {
 
         shaderProgram.bind();
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glDrawElements(GL_TRIANGLES, COUNT, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
 
