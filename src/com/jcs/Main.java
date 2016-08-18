@@ -14,8 +14,7 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL30.glGenVertexArrays;
+import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Main {
@@ -28,7 +27,8 @@ public class Main {
 
     ShaderProgram shaderProgram;
 
-    int COUNT, VBO, VAO, EBO;
+    Texture texture;
+    int COUNT, VBO, VAO, EBO, TBO, CBO;
 
     private void init() throws Exception {
         shaderProgram = new ShaderProgram();
@@ -49,6 +49,20 @@ public class Main {
                 1, 2, 3    // Second Triangle
         };
 
+        float[] colors = new float[]{
+                1.0f, 0.0f, 0.0f,
+                0.0f, 1.0f, 0.0f,
+                0.0f, 0.0f, 1.0f,
+                1.0f, 1.0f, 0.0f,
+        };
+
+        float[] texCoords = new float[]{
+                0.0f, 0.0f,  // Lower-left corner
+                1.0f, 0.0f,  // Lower-right corner
+                1.0f, 1.0f,  // Top-center corner
+                0.0f, 1.0f,  // Top-center corner
+        };
+
         COUNT = indices.length;
 
         VAO = glGenVertexArrays();
@@ -62,6 +76,22 @@ public class Main {
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
         glEnableVertexAttribArray(0);
 
+        CBO = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, CBO);
+        fb = BufferUtils.createFloatBuffer(colors.length);
+        fb.put(colors).flip();
+        glBufferData(GL_ARRAY_BUFFER, fb, GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(1);
+
+        TBO = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, TBO);
+        fb = BufferUtils.createFloatBuffer(texCoords.length);
+        fb.put(texCoords).flip();
+        glBufferData(GL_ARRAY_BUFFER, fb, GL_STATIC_DRAW);
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(2);
+
         EBO = glGenBuffers();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         IntBuffer ib = BufferUtils.createIntBuffer(indices.length);
@@ -73,21 +103,27 @@ public class Main {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
+        texture = new Texture("container.jpg");
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        int ourTextureLocation = glGetUniformLocation(shaderProgram.programId, "ourTexture");
+        glUniform1ui(ourTextureLocation, 0);
     }
 
     private void update() {
-        double timeValue = glfwGetTime();
+        /*double timeValue = glfwGetTime();
         float greenValue = (float) (Math.sin(timeValue) / 2f) + 0.5f;
         int vertexColorLocation = glGetUniformLocation(shaderProgram.programId, "ourColor");
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);*/
+
     }
 
     private void render() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
         shaderProgram.bind();
+        texture.bind(0);
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glDrawElements(GL_TRIANGLES, COUNT, GL_UNSIGNED_INT, 0);
