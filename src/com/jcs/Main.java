@@ -216,10 +216,9 @@ public class Main {
 
         glBindVertexArray(VAO);
         Quaternionf q = new Quaternionf();
-        float angle = (float) glfwGetTime();
         for (int i = 0; i < cubePositions.length; i++) {
             Vector3f v = cubePositions[i];
-            q.identity().rotateAxis(angle, cubeRotations[i]);
+            q.identity().rotate(cubeRotations[i].x, cubeRotations[i].y, cubeRotations[i].z);
             model.identity().translate(v).rotate(q);
 
             glUniformMatrix4fv(modelLoc, false, model.get(data));
