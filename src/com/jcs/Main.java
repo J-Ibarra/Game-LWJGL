@@ -44,6 +44,8 @@ public class Main {
     Vector3f cameraFront = new Vector3f(0.0f, 0.0f, -1.0f);
     Vector3f cameraUp = new Vector3f(0.0f, 1.0f, 0.0f);
 
+    boolean[] keys = new boolean[GLFW_KEY_LAST];
+
     Vector3f[] cubePositions = new Vector3f[]{
             new Vector3f(0.0f, 0.0f, 0.0f),
             new Vector3f(2.0f, 5.0f, -15.0f),
@@ -166,20 +168,8 @@ public class Main {
     }
 
     private void update() {
-        /*double timeValue = glfwGetTime();
-        float greenValue = (float) (Math.sin(timeValue) / 2f) + 0.5f;
-        int vertexColorLocation = glGetUniformLocation(shaderProgram.programId, "ourColor");
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);*/
-        /*Matrix4f trans = new Matrix4f();
 
-        trans.translate(new Vector3f((float) Math.sin(glfwGetTime()), 0f, 0.0f));
-        trans.rotate((float) glfwGetTime(), new Vector3f(0.0f, 0.0f, 1.0f));
-
-        float[] data = new float[16];
-        int transformLoc = glGetUniformLocation(shaderProgram.programId, "transform");
-        glUniformMatrix4fv(transformLoc, false, trans.get(data));*/
-
-
+        movement();
     }
 
     private void render() {
@@ -227,21 +217,25 @@ public class Main {
 
     }
 
+    public void movement() {
+        float cameraSpeed = 0.05f;
+        if (keys[GLFW_KEY_W])
+            cameraPos.add(cameraFront.mul(cameraSpeed, new Vector3f()));
+        if (keys[GLFW_KEY_S])
+            cameraPos.sub(cameraFront.mul(cameraSpeed, new Vector3f()));
+        if (keys[GLFW_KEY_A])
+            cameraPos.sub(cameraFront.cross(cameraUp, new Vector3f()).normalize().mul(cameraSpeed));
+        if (keys[GLFW_KEY_D])
+            cameraPos.add(cameraFront.cross(cameraUp, new Vector3f()).normalize().mul(cameraSpeed));
+    }
+
     private void initCallbacks() {
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
             if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
                 glfwSetWindowShouldClose(window, true); // We will detect this in our rendering loop
 
-            float cameraSpeed = 0.05f;
-            if (key == GLFW_KEY_W && action != GLFW_RELEASE)
-                cameraPos.add(cameraFront.mul(cameraSpeed, new Vector3f()));
-            if (key == GLFW_KEY_S)
-                cameraPos.sub(cameraFront.mul(cameraSpeed, new Vector3f()));
-            if (key == GLFW_KEY_A)
-                cameraPos.sub(cameraFront.cross(cameraUp, new Vector3f()).normalize().mul(cameraSpeed));
-            if (key == GLFW_KEY_D)
-                cameraPos.add(cameraFront.cross(cameraUp, new Vector3f()).normalize().mul(cameraSpeed));
+            keys[key] = action != GLFW_RELEASE;
         });
 
         glfwSetWindowSizeCallback(window, (window, width, height) -> {
