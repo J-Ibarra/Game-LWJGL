@@ -319,7 +319,7 @@ public class Main {
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
         // Enable v-sync <- ups and fps = 60 / SwapInterval->
-        glfwSwapInterval(0);
+        glfwSwapInterval(1);
 
         // Make the window visible
         glfwShowWindow(window);
