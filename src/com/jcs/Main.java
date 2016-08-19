@@ -40,17 +40,13 @@ public class Main {
     Matrix4f view;
     Matrix4f projection;
 
-    Vector3f cameraPos = new Vector3f(0.0f, 0.0f, 3.0f);
-    Vector3f cameraFront = new Vector3f(0.0f, 0.0f, -1.0f);
-    Vector3f cameraUp = new Vector3f(0.0f, 1.0f, 0.0f);
-
     boolean[] keys = new boolean[GLFW_KEY_LAST];
 
-    float yaw = -90.0f;    // Yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right (due to how Eular angles work) so we initially rotate a bit to the left.
-    float pitch = 0.0f;
+    public Camera camera = new Camera() {
+
+    };
     double lastX = WIDTH / 2.0;
     double lastY = HEIGHT / 2.0;
-    float fov = 45.0f;
 
     Vector3f[] cubePositions = new Vector3f[]{
             new Vector3f(0.0f, 0.0f, 0.0f),
@@ -197,10 +193,10 @@ public class Main {
         float[] data = new float[16];
 
         // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-        projection.identity().perspective(fov, (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
+        projection.identity().perspective(camera.Zoom, (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
         glUniformMatrix4fv(projLoc, false, projection.get(data));
 
-        view.identity().lookAt(cameraPos, cameraPos.add(cameraFront, new Vector3f()), cameraUp);
+        view = camera.getViewMatrix();
         glUniformMatrix4fv(viewLoc, false, view.get(data));
 
         glBindVertexArray(VAO);
@@ -234,44 +230,22 @@ public class Main {
         lastX = xpos;
         lastY = ypos;
 
-        float sensitivity = 0.05f;
-        xoffset *= sensitivity;
-        yoffset *= sensitivity;
-
-        yaw += xoffset;
-        pitch += yoffset;
-
-        if (pitch > 89.0f)
-            pitch = 89.0f;
-        if (pitch < -89.0f)
-            pitch = -89.0f;
-
-        Vector3f front = new Vector3f();
-        front.x = (float) (Math.cos(Math.toRadians(yaw)) * Math.cos(Math.toRadians(pitch)));
-        front.y = (float) Math.sin(Math.toRadians(pitch));
-        front.z = (float) (Math.sin(Math.toRadians(yaw)) * Math.cos(Math.toRadians(pitch)));
-        cameraFront = front.normalize();
+        camera.ProcessMouseMovement(xoffset, yoffset);
     }
 
     public void scrollCallback(long window, double xoffset, double yoffset) {
-        if (fov >= 1.0f && fov <= 45.0f)
-            fov -= yoffset;
-        if (fov <= 1.0f)
-            fov = 1.0f;
-        if (fov >= 45.0f)
-            fov = 45.0f;
+        camera.ProcessMouseScroll((float) yoffset);
     }
 
     public void movement(float deltaTime) {
-        float cameraSpeed = 0.5f * deltaTime;
         if (keys[GLFW_KEY_W])
-            cameraPos.add(cameraFront.mul(cameraSpeed, new Vector3f()));
+            camera.ProcessKeyboard(Camera.Camera_Movement.FORWARD, deltaTime);
         if (keys[GLFW_KEY_S])
-            cameraPos.sub(cameraFront.mul(cameraSpeed, new Vector3f()));
+            camera.ProcessKeyboard(Camera.Camera_Movement.BACKWARD, deltaTime);
         if (keys[GLFW_KEY_A])
-            cameraPos.sub(cameraFront.cross(cameraUp, new Vector3f()).normalize().mul(cameraSpeed));
+            camera.ProcessKeyboard(Camera.Camera_Movement.LEFT, deltaTime);
         if (keys[GLFW_KEY_D])
-            cameraPos.add(cameraFront.cross(cameraUp, new Vector3f()).normalize().mul(cameraSpeed));
+            camera.ProcessKeyboard(Camera.Camera_Movement.RIGHT, deltaTime);
     }
 
     private void initCallbacks() {
