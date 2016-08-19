@@ -40,6 +40,26 @@ public class Main {
     Matrix4f view;
     Matrix4f projection;
 
+    Vector3f cameraPos = new Vector3f(0.0f, 0.0f, 3.0f);
+    Vector3f cameraTarget = new Vector3f(0.0f, 0.0f, 0.0f);
+    Vector3f cameraDirection = cameraPos.sub(cameraTarget, new Vector3f()).normalize();
+    Vector3f up = new Vector3f(0.0f, 1.0f, 0.0f);
+    Vector3f cameraRight = up.cross(cameraDirection, new Vector3f()).normalize();
+    Vector3f cameraUp = cameraDirection.cross(cameraRight, new Vector3f());
+
+    Vector3f[] cubePositions = new Vector3f[]{
+            new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(2.0f, 5.0f, -15.0f),
+            new Vector3f(-1.5f, -2.2f, -2.5f),
+            new Vector3f(-3.8f, -2.0f, -12.3f),
+            new Vector3f(2.4f, -0.4f, -3.5f),
+            new Vector3f(-1.7f, 3.0f, -7.5f),
+            new Vector3f(1.3f, -2.0f, -2.5f),
+            new Vector3f(1.5f, 2.0f, -2.5f),
+            new Vector3f(1.5f, 0.2f, -1.5f),
+            new Vector3f(-1.3f, 1.0f, -1.5f),
+    };
+
     private void init() throws Exception {
         glEnable(GL_DEPTH_TEST);
 
@@ -137,7 +157,7 @@ public class Main {
         glBindVertexArray(0);
 
         texture1 = Texture.getTexture("container.jpg");
-        texture2 = Texture.getTexture("awesomeface.png");
+        texture2 = Texture.getTexture("awesomeFace.png");
 
         model = new Matrix4f();
         view = new Matrix4f().translate(new Vector3f(0.0f, 0.0f, -3.0f));
@@ -182,19 +202,28 @@ public class Main {
         int projLoc = glGetUniformLocation(shaderProgram.programId, "projection");
 
         float[] data = new float[16];
-        Quaternionf q = new Quaternionf();
-        float angle = (float) glfwGetTime();
-        model = new Matrix4f().rotate(q.rotateX(angle).rotateZ(angle).rotateY(-angle));
 
-        glUniformMatrix4fv(modelLoc, false, model.get(data));
-        glUniformMatrix4fv(viewLoc, false, view.get(data));
         // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+
         glUniformMatrix4fv(projLoc, false, projection.get(data));
 
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
 
+        float radius = 10.0f;
+        float camX = (float) Math.sin(glfwGetTime()) * radius;
+        float camZ = (float) Math.cos(glfwGetTime()) * radius;
+        view.identity().lookAt(new Vector3f(camX, 0.0f, camZ), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 1.0f, 0.0f));
+
+        glBindVertexArray(VAO);
+        Quaternionf q = new Quaternionf();
+        for (Vector3f v : cubePositions) {
+            model.identity().translate(v);
+            glUniformMatrix4fv(viewLoc, false, view.get(data));
+            glUniformMatrix4fv(modelLoc, false, model.get(data));
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+
+        glBindVertexArray(0);
 
     }
 
@@ -237,7 +266,7 @@ public class Main {
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
         // Enable v-sync <- ups and fps = 60 / SwapInterval->
-        glfwSwapInterval(1);
+        glfwSwapInterval(2);
 
         // Make the window visible
         glfwShowWindow(window);
