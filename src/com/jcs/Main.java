@@ -36,6 +36,10 @@ public class Main {
 
     int COUNT, VBO, VAO, EBO, TBO, CBO;
 
+    Matrix4f model;
+    Matrix4f view;
+    Matrix4f projection;
+
     private void init() throws Exception {
         shaderProgram = new ShaderProgram();
         shaderProgram.createVertexShader("shaders/vertex.vs");
@@ -63,9 +67,9 @@ public class Main {
         };
 
         float[] texCoords = new float[]{
-                0.0f, 0.0f,  // Lower-left corner
+                1.0f, 1.0f,  // Lower-left corner
                 1.0f, 0.0f,  // Lower-right corner
-                1.0f, 1.0f,  // Top-center corner
+                0.0f, 0.0f,  // Top-center corner
                 0.0f, 1.0f,  // Top-center corner
         };
 
@@ -112,6 +116,11 @@ public class Main {
         texture1 = Texture.getTexture("container.jpg");
         texture2 = Texture.getTexture("awesomeface.png");
 
+        model = new Matrix4f().rotate(-55.0f, new Vector3f(1.0f, 0.0f, 0.0f));
+        view = new Matrix4f().translate(new Vector3f(0.0f, 0.0f, -3.0f));
+        projection = new Matrix4f().perspective(45.0f, (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
+
+
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
@@ -121,14 +130,16 @@ public class Main {
         float greenValue = (float) (Math.sin(timeValue) / 2f) + 0.5f;
         int vertexColorLocation = glGetUniformLocation(shaderProgram.programId, "ourColor");
         glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);*/
-        Matrix4f trans = new Matrix4f();
+        /*Matrix4f trans = new Matrix4f();
 
         trans.translate(new Vector3f((float) Math.sin(glfwGetTime()), 0f, 0.0f));
         trans.rotate((float) glfwGetTime(), new Vector3f(0.0f, 0.0f, 1.0f));
 
         float[] data = new float[16];
         int transformLoc = glGetUniformLocation(shaderProgram.programId, "transform");
-        glUniformMatrix4fv(transformLoc, false, trans.get(data));
+        glUniformMatrix4fv(transformLoc, false, trans.get(data));*/
+
+
 
 
     }
@@ -136,17 +147,30 @@ public class Main {
     private void render() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-        shaderProgram.bind();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glUniform1i(glGetUniformLocation(shaderProgram.programId, "ourTexture1"), 0);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
         glUniform1i(glGetUniformLocation(shaderProgram.programId, "ourTexture2"), 1);
+
+        shaderProgram.bind();
+
+        int modelLoc = glGetUniformLocation(shaderProgram.programId, "model");
+        int viewLoc = glGetUniformLocation(shaderProgram.programId, "view");
+        int projLoc = glGetUniformLocation(shaderProgram.programId, "projection");
+
+        float[] data = new float[16];
+        glUniformMatrix4fv(modelLoc, false, model.get(data));
+        glUniformMatrix4fv(viewLoc, false, view.get(data));
+        // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+        glUniformMatrix4fv(projLoc, false, projection.get(data));
+
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glDrawElements(GL_TRIANGLES, COUNT, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
+
 
 
     }
@@ -190,7 +214,7 @@ public class Main {
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
         // Enable v-sync <- ups and fps = 60 / SwapInterval->
-        glfwSwapInterval(2);
+        glfwSwapInterval(1);
 
         // Make the window visible
         glfwShowWindow(window);
@@ -202,6 +226,10 @@ public class Main {
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
             if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
                 glfwSetWindowShouldClose(window, true); // We will detect this in our rendering loop
+        });
+
+        glfwSetWindowSizeCallback(window, (window, width, height) -> {
+            glViewport(0, 0, width, height);
         });
     }
 
