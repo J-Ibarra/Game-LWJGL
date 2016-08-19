@@ -46,6 +46,12 @@ public class Main {
 
     boolean[] keys = new boolean[GLFW_KEY_LAST];
 
+    float yaw = -90.0f;    // Yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right (due to how Eular angles work) so we initially rotate a bit to the left.
+    float pitch = 0.0f;
+    double lastX = WIDTH / 2.0;
+    double lastY = HEIGHT / 2.0;
+    float fov = 45.0f;
+
     Vector3f[] cubePositions = new Vector3f[]{
             new Vector3f(0.0f, 0.0f, 0.0f),
             new Vector3f(2.0f, 5.0f, -15.0f),
@@ -159,8 +165,8 @@ public class Main {
         texture2 = Texture.getTexture("awesomeFace.png");
 
         model = new Matrix4f();
-        view = new Matrix4f().translate(new Vector3f(0.0f, 0.0f, -3.0f));
-        projection = new Matrix4f().perspective(45.0f, (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
+        view = new Matrix4f();
+        projection = new Matrix4f();
 
 
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -191,14 +197,11 @@ public class Main {
         float[] data = new float[16];
 
         // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-
+        projection.identity().perspective(fov, (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
         glUniformMatrix4fv(projLoc, false, projection.get(data));
 
-
-        float radius = 10.0f;
-        float camX = (float) Math.sin(glfwGetTime()) * radius;
-        float camZ = (float) Math.cos(glfwGetTime()) * radius;
         view.identity().lookAt(cameraPos, cameraPos.add(cameraFront, new Vector3f()), cameraUp);
+        glUniformMatrix4fv(viewLoc, false, view.get(data));
 
         glBindVertexArray(VAO);
         Quaternionf q = new Quaternionf();
@@ -207,7 +210,7 @@ public class Main {
             Vector3f v = cubePositions[i];
             float angle = i * 20.f;
             model.identity().translate(v).rotate(q.rotateAxis(angle, new Vector3f(1.0f, 0.3f, 0.5f)));
-            glUniformMatrix4fv(viewLoc, false, view.get(data));
+
             glUniformMatrix4fv(modelLoc, false, model.get(data));
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
@@ -215,6 +218,48 @@ public class Main {
 
         glBindVertexArray(0);
 
+    }
+
+    private boolean firstMouse = true;
+
+    public void mouseCallbac(long window, double xpos, double ypos) {
+        if (firstMouse) {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
+        }
+
+        float xoffset = (float) (xpos - lastX);
+        float yoffset = (float) (lastY - ypos);
+        lastX = xpos;
+        lastY = ypos;
+
+        float sensitivity = 0.05f;
+        xoffset *= sensitivity;
+        yoffset *= sensitivity;
+
+        yaw += xoffset;
+        pitch += yoffset;
+
+        if (pitch > 89.0f)
+            pitch = 89.0f;
+        if (pitch < -89.0f)
+            pitch = -89.0f;
+
+        Vector3f front = new Vector3f();
+        front.x = (float) (Math.cos(Math.toRadians(yaw)) * Math.cos(Math.toRadians(pitch)));
+        front.y = (float) Math.sin(Math.toRadians(pitch));
+        front.z = (float) (Math.sin(Math.toRadians(yaw)) * Math.cos(Math.toRadians(pitch)));
+        cameraFront = front.normalize();
+    }
+
+    public void scrollCallback(long window, double xoffset, double yoffset) {
+        if (fov >= 1.0f && fov <= 45.0f)
+            fov -= yoffset;
+        if (fov <= 1.0f)
+            fov = 1.0f;
+        if (fov >= 45.0f)
+            fov = 45.0f;
     }
 
     public void movement(float deltaTime) {
@@ -237,6 +282,9 @@ public class Main {
 
             keys[key] = action != GLFW_RELEASE;
         });
+
+        glfwSetCursorPosCallback(window, this::mouseCallbac);
+        glfwSetScrollCallback(window, this::scrollCallback);
 
         glfwSetWindowSizeCallback(window, (window, width, height) -> {
             glViewport(0, 0, width, height);
