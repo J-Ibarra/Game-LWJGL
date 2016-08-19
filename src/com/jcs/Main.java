@@ -41,11 +41,8 @@ public class Main {
     Matrix4f projection;
 
     Vector3f cameraPos = new Vector3f(0.0f, 0.0f, 3.0f);
-    Vector3f cameraTarget = new Vector3f(0.0f, 0.0f, 0.0f);
-    Vector3f cameraDirection = cameraPos.sub(cameraTarget, new Vector3f()).normalize();
-    Vector3f up = new Vector3f(0.0f, 1.0f, 0.0f);
-    Vector3f cameraRight = up.cross(cameraDirection, new Vector3f()).normalize();
-    Vector3f cameraUp = cameraDirection.cross(cameraRight, new Vector3f());
+    Vector3f cameraFront = new Vector3f(0.0f, 0.0f, -1.0f);
+    Vector3f cameraUp = new Vector3f(0.0f, 1.0f, 0.0f);
 
     Vector3f[] cubePositions = new Vector3f[]{
             new Vector3f(0.0f, 0.0f, 0.0f),
@@ -211,12 +208,15 @@ public class Main {
         float radius = 10.0f;
         float camX = (float) Math.sin(glfwGetTime()) * radius;
         float camZ = (float) Math.cos(glfwGetTime()) * radius;
-        view.identity().lookAt(new Vector3f(camX, 0.0f, camZ), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 1.0f, 0.0f));
+        view.identity().lookAt(cameraPos, cameraPos.add(cameraFront, new Vector3f()), cameraUp);
 
         glBindVertexArray(VAO);
         Quaternionf q = new Quaternionf();
-        for (Vector3f v : cubePositions) {
-            model.identity().translate(v);
+
+        for (int i = 0; i < cubePositions.length; i++) {
+            Vector3f v = cubePositions[i];
+            float angle = i * 20.f;
+            model.identity().translate(v).rotate(q.rotateAxis(angle, new Vector3f(1.0f, 0.3f, 0.5f)));
             glUniformMatrix4fv(viewLoc, false, view.get(data));
             glUniformMatrix4fv(modelLoc, false, model.get(data));
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -225,6 +225,28 @@ public class Main {
 
         glBindVertexArray(0);
 
+    }
+
+    private void initCallbacks() {
+        // Setup a key callback. It will be called every time a key is pressed, repeated or released.
+        glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
+            if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
+                glfwSetWindowShouldClose(window, true); // We will detect this in our rendering loop
+
+            float cameraSpeed = 0.05f;
+            if (key == GLFW_KEY_W && action != GLFW_RELEASE)
+                cameraPos.add(cameraFront.mul(cameraSpeed, new Vector3f()));
+            if (key == GLFW_KEY_S)
+                cameraPos.sub(cameraFront.mul(cameraSpeed, new Vector3f()));
+            if (key == GLFW_KEY_A)
+                cameraPos.sub(cameraFront.cross(cameraUp, new Vector3f()).normalize().mul(cameraSpeed));
+            if (key == GLFW_KEY_D)
+                cameraPos.add(cameraFront.cross(cameraUp, new Vector3f()).normalize().mul(cameraSpeed));
+        });
+
+        glfwSetWindowSizeCallback(window, (window, width, height) -> {
+            glViewport(0, 0, width, height);
+        });
     }
 
     private void oneSecond(int ups, int fps) {
@@ -270,19 +292,6 @@ public class Main {
 
         // Make the window visible
         glfwShowWindow(window);
-    }
-
-
-    private void initCallbacks() {
-        // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-        glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-            if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
-                glfwSetWindowShouldClose(window, true); // We will detect this in our rendering loop
-        });
-
-        glfwSetWindowSizeCallback(window, (window, width, height) -> {
-            glViewport(0, 0, width, height);
-        });
     }
 
     private void loop() throws Exception {
