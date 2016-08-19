@@ -1,6 +1,7 @@
 package com.jcs;
 
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
@@ -40,6 +41,8 @@ public class Main {
     Matrix4f projection;
 
     private void init() throws Exception {
+        glEnable(GL_DEPTH_TEST);
+
         shaderProgram = new ShaderProgram();
         shaderProgram.createVertexShader("shaders/vertex.vs");
         shaderProgram.createFragmentShader("shaders/fragment.fs");
@@ -179,7 +182,10 @@ public class Main {
         int projLoc = glGetUniformLocation(shaderProgram.programId, "projection");
 
         float[] data = new float[16];
-        model.identity().rotate((float) glfwGetTime(), new Vector3f(0.5f, 1.0f, 0.0f));
+        Quaternionf q = new Quaternionf();
+        float angle = (float) glfwGetTime();
+        model = new Matrix4f().rotate(q.rotateX(angle).rotateZ(angle).rotateY(-angle));
+
         glUniformMatrix4fv(modelLoc, false, model.get(data));
         glUniformMatrix4fv(viewLoc, false, view.get(data));
         // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
