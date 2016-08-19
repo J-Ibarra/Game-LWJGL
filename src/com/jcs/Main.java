@@ -10,6 +10,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import java.nio.FloatBuffer;
+import java.util.Random;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -59,6 +60,21 @@ public class Main {
             new Vector3f(1.5f, 2.0f, -2.5f),
             new Vector3f(1.5f, 0.2f, -1.5f),
             new Vector3f(-1.3f, 1.0f, -1.5f),
+    };
+
+
+    Random r = new Random();
+    Vector3f[] cubeRotations = new Vector3f[]{
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
     };
 
     private void init() throws Exception {
@@ -170,7 +186,6 @@ public class Main {
     }
 
     private void update(float deltaTime) {
-
         movement(deltaTime);
     }
 
@@ -201,11 +216,11 @@ public class Main {
 
         glBindVertexArray(VAO);
         Quaternionf q = new Quaternionf();
-
+        float angle = (float) glfwGetTime();
         for (int i = 0; i < cubePositions.length; i++) {
             Vector3f v = cubePositions[i];
-            float angle = i * 20.f;
-            model.identity().translate(v).rotate(q.rotateAxis(angle, new Vector3f(1.0f, 0.3f, 0.5f)));
+            q.identity().rotateAxis(angle, cubeRotations[i]);
+            model.identity().translate(v).rotate(q);
 
             glUniformMatrix4fv(modelLoc, false, model.get(data));
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -304,7 +319,7 @@ public class Main {
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
         // Enable v-sync <- ups and fps = 60 / SwapInterval->
-        glfwSwapInterval(2);
+        glfwSwapInterval(0);
 
         // Make the window visible
         glfwShowWindow(window);
