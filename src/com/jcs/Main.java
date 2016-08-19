@@ -167,9 +167,9 @@ public class Main {
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    private void update() {
+    private void update(float deltaTime) {
 
-        movement();
+        movement(deltaTime);
     }
 
     private void render() {
@@ -217,8 +217,8 @@ public class Main {
 
     }
 
-    public void movement() {
-        float cameraSpeed = 0.05f;
+    public void movement(float deltaTime) {
+        float cameraSpeed = 0.5f * deltaTime;
         if (keys[GLFW_KEY_W])
             cameraPos.add(cameraFront.mul(cameraSpeed, new Vector3f()));
         if (keys[GLFW_KEY_S])
@@ -305,13 +305,17 @@ public class Main {
 
         glfwSetTime(0);
         double lastTime = glfwGetTime();
+        double lastTimer = glfwGetTime();
         while (running) {
 
+            double currentTime = glfwGetTime();
+            float deltaTime = (float) (currentTime - lastTime);
+            lastTime = currentTime;
             // Poll for window events. The key callback above will only be
             // invoked during this call.
             glfwPollEvents();
             ups++;
-            update();
+            update(deltaTime);
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
             fps++;
@@ -319,10 +323,10 @@ public class Main {
             glfwSwapBuffers(window); // swap the color buffers
 
 
-            if (glfwGetTime() - lastTime > 1) {
+            if (glfwGetTime() - lastTimer > 1) {
                 oneSecond(ups, fps);
                 ups = fps = 0;
-                lastTime = glfwGetTime();
+                lastTimer = glfwGetTime();
             }
 
             if (glfwWindowShouldClose(window)) {
