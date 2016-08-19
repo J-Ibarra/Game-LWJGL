@@ -12,6 +12,7 @@ import java.nio.IntBuffer;
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
@@ -27,7 +28,9 @@ public class Main {
 
     ShaderProgram shaderProgram;
 
-    Texture texture;
+    int texture1;
+    int texture2;
+
     int COUNT, VBO, VAO, EBO, TBO, CBO;
 
     private void init() throws Exception {
@@ -103,12 +106,16 @@ public class Main {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
-        texture = new Texture("container.jpg");
+        texture1 = Texture.getTexture("container.jpg");
+        texture2 = Texture.getTexture("awesomeface.png");
+
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-        int ourTextureLocation = glGetUniformLocation(shaderProgram.programId, "ourTexture");
+        int ourTextureLocation = glGetUniformLocation(shaderProgram.programId, "ourTexture1");
         glUniform1ui(ourTextureLocation, 0);
+        ourTextureLocation = glGetUniformLocation(shaderProgram.programId, "ourTexture2");
+        glUniform1ui(ourTextureLocation, 1);
     }
 
     private void update() {
@@ -123,7 +130,12 @@ public class Main {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
         shaderProgram.bind();
-        texture.bind(0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glUniform1i(glGetUniformLocation(shaderProgram.programId, "ourTexture1"), 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+        glUniform1i(glGetUniformLocation(shaderProgram.programId, "ourTexture2"), 1);
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glDrawElements(GL_TRIANGLES, COUNT, GL_UNSIGNED_INT, 0);
