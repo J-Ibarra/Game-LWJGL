@@ -9,7 +9,6 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -34,7 +33,7 @@ public class Main {
     int texture1;
     int texture2;
 
-    int COUNT, VBO, VAO, EBO, TBO, CBO;
+    int VBO, VAO;
 
     Matrix4f model;
     Matrix4f view;
@@ -48,10 +47,47 @@ public class Main {
 
 
         float[] vertices = new float[]{
-                0.5f, 0.5f, 0.0f,  // Top Right
-                0.5f, -0.5f, 0.0f,  // Bottom Right
-                -0.5f, -0.5f, 0.0f,  // Bottom Left
-                -0.5f, 0.5f, 0.0f   // Top Left
+                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+                0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+                -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+
+                -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+
+                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
         };
 
         int[] indices = new int[]{  // Note that we start from 0!
@@ -73,7 +109,11 @@ public class Main {
                 0.0f, 1.0f,  // Top-center corner
         };
 
-        COUNT = indices.length;
+        int floatByteSize = 4;
+        int positionFloatCount = 3;
+        int textureFloatCount = 2;
+        int floatsPerVertex = positionFloatCount + textureFloatCount;
+        int vertexFloatSizeInBytes = floatByteSize * floatsPerVertex;
 
         VAO = glGenVertexArrays();
         glBindVertexArray(VAO);
@@ -83,40 +123,20 @@ public class Main {
         FloatBuffer fb = BufferUtils.createFloatBuffer(vertices.length);
         fb.put(vertices).flip();
         glBufferData(GL_ARRAY_BUFFER, fb, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexFloatSizeInBytes, 0);
         glEnableVertexAttribArray(0);
 
-        CBO = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, CBO);
-        fb = BufferUtils.createFloatBuffer(colors.length);
-        fb.put(colors).flip();
-        glBufferData(GL_ARRAY_BUFFER, fb, GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
-        glEnableVertexAttribArray(1);
-
-        TBO = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, TBO);
-        fb = BufferUtils.createFloatBuffer(texCoords.length);
-        fb.put(texCoords).flip();
-        glBufferData(GL_ARRAY_BUFFER, fb, GL_STATIC_DRAW);
-        glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, 0);
+        int byteOffset = floatByteSize * positionFloatCount;
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, vertexFloatSizeInBytes, byteOffset);
         glEnableVertexAttribArray(2);
 
-        EBO = glGenBuffers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        IntBuffer ib = BufferUtils.createIntBuffer(indices.length);
-        ib.put(indices).flip();
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, ib, GL_STATIC_DRAW);
-
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
         texture1 = Texture.getTexture("container.jpg");
         texture2 = Texture.getTexture("awesomeface.png");
 
-        model = new Matrix4f().rotate(-55.0f, new Vector3f(1.0f, 0.0f, 0.0f));
+        model = new Matrix4f();
         view = new Matrix4f().translate(new Vector3f(0.0f, 0.0f, -3.0f));
         projection = new Matrix4f().perspective(45.0f, (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
 
@@ -140,8 +160,6 @@ public class Main {
         glUniformMatrix4fv(transformLoc, false, trans.get(data));*/
 
 
-
-
     }
 
     private void render() {
@@ -161,16 +179,15 @@ public class Main {
         int projLoc = glGetUniformLocation(shaderProgram.programId, "projection");
 
         float[] data = new float[16];
+        model.identity().rotate((float) glfwGetTime(), new Vector3f(0.5f, 1.0f, 0.0f));
         glUniformMatrix4fv(modelLoc, false, model.get(data));
         glUniformMatrix4fv(viewLoc, false, view.get(data));
         // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
         glUniformMatrix4fv(projLoc, false, projection.get(data));
 
         glBindVertexArray(VAO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glDrawElements(GL_TRIANGLES, COUNT, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
-
 
 
     }
