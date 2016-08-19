@@ -1,5 +1,7 @@
 package com.jcs;
 
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -15,7 +17,8 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Main {
@@ -111,11 +114,6 @@ public class Main {
 
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-        int ourTextureLocation = glGetUniformLocation(shaderProgram.programId, "ourTexture1");
-        glUniform1ui(ourTextureLocation, 0);
-        ourTextureLocation = glGetUniformLocation(shaderProgram.programId, "ourTexture2");
-        glUniform1ui(ourTextureLocation, 1);
     }
 
     private void update() {
@@ -123,6 +121,15 @@ public class Main {
         float greenValue = (float) (Math.sin(timeValue) / 2f) + 0.5f;
         int vertexColorLocation = glGetUniformLocation(shaderProgram.programId, "ourColor");
         glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);*/
+        Matrix4f trans = new Matrix4f();
+
+        trans.translate(new Vector3f((float) Math.sin(glfwGetTime()), 0f, 0.0f));
+        trans.rotate((float) glfwGetTime(), new Vector3f(0.0f, 0.0f, 1.0f));
+
+        float[] data = new float[16];
+        int transformLoc = glGetUniformLocation(shaderProgram.programId, "transform");
+        glUniformMatrix4fv(transformLoc, false, trans.get(data));
+
 
     }
 
