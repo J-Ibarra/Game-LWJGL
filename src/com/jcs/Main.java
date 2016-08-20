@@ -159,7 +159,17 @@ public class Main {
                 0.0f, 1.0f,  // Top-center corner
         };*/
 
+        int floatByteSize = 4;
+        int positionFloatCount = 3;
+        int normalFloatCount = 3;
+        int floatsPerVertex = positionFloatCount + normalFloatCount;
+        int vertexFloatSizeInBytes = floatByteSize * floatsPerVertex;
+
+        /**
+         * Cube
+         * */
         VAO = glGenVertexArrays();
+        glBindVertexArray(VAO);
         VBO = glGenBuffers();
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -167,29 +177,29 @@ public class Main {
         fb.put(vertices).flip();
         glBufferData(GL_ARRAY_BUFFER, fb, GL_STATIC_DRAW);
 
-        glBindVertexArray(VAO);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexFloatSizeInBytes, 0);
         glEnableVertexAttribArray(0);
+        int byteOffset = floatByteSize * positionFloatCount;
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, vertexFloatSizeInBytes, byteOffset);
+        glEnableVertexAttribArray(1);
+
         glBindVertexArray(0);
 
-        /*int byteOffset = floatByteSize * positionFloatCount;
-        glVertexAttribPointer(2, 2, GL_FLOAT, false, vertexFloatSizeInBytes, byteOffset);
-        glEnableVertexAttribArray(2);*/
 
+        /**
+         * Light
+         */
 
         lightVAO = glGenVertexArrays();
         glBindVertexArray(lightVAO);
         // We only need to bind to the VBO (to link it with glVertexAttribPointer), no need to fill it; the VBO's data already contains all we need.
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexFloatSizeInBytes, 0);
         glEnableVertexAttribArray(0);
         glBindVertexArray(0);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
-
-        //texture1 = Texture.getTexture("container.jpg");
-        //texture2 = Texture.getTexture("awesomeFace.png");
 
         model = new Matrix4f();
         view = new Matrix4f();
@@ -210,8 +220,10 @@ public class Main {
         lightingShader.bind();
         int objectColorLoc = glGetUniformLocation(lightingShader.programId, "objectColor");
         int lightColorLoc = glGetUniformLocation(lightingShader.programId, "lightColor");
+        int lightPosLoc = glGetUniformLocation(lightingShader.programId, "lightPos");
         glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
         glUniform3f(lightColorLoc, 1.0f, 0.5f, 1.0f);
+        glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
 
         float[] data = new float[16];
 
@@ -242,34 +254,6 @@ public class Main {
         model.identity().translate(lightPos).scale(0.2f);
         glUniformMatrix4fv(modelLoc, false, model.get(data));
         glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-
-
-        /*glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glUniform1i(glGetUniformLocation(shaderProgram.programId, "ourTexture1"), 0);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
-        glUniform1i(glGetUniformLocation(shaderProgram.programId, "ourTexture2"), 1);*/
-
-        shaderProgram.bind();
-
-
-        // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-
-
-        glBindVertexArray(VAO);
-        /*Quaternionf q = new Quaternionf();
-        for (int i = 0; i < cubePositions.length; i++) {
-            Vector3f v = cubePositions[i];
-            q.identity().rotate(cubeRotations[i].x, cubeRotations[i].y, cubeRotations[i].z);
-            model.identity().translate(v).rotate(q);
-
-            glUniformMatrix4fv(modelLoc, false, model.get(data));
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }*/
-
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 
