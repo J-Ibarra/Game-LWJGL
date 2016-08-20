@@ -1,7 +1,6 @@
 package com.jcs;
 
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
@@ -10,12 +9,10 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import java.nio.FloatBuffer;
-import java.util.Random;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
@@ -31,11 +28,13 @@ public class Main {
     private long window;
 
     ShaderProgram shaderProgram;
-
-    int texture1;
-    int texture2;
+    ShaderProgram lightingShader;
+    ShaderProgram lampShader;
+    //int texture1;
+    //int texture2;
 
     int VBO, VAO;
+    int lightVAO;
 
     Matrix4f model;
     Matrix4f view;
@@ -43,14 +42,15 @@ public class Main {
 
     boolean[] keys = new boolean[GLFW_KEY_LAST];
 
-    public Camera camera = new Camera() {
+    public Camera camera = new Camera();
 
-    };
+    Vector3f lightPos = new Vector3f(1.2f, 1.0f, 2.0f);
+
     double lastX = WIDTH / 2.0;
     double lastY = HEIGHT / 2.0;
 
-    Vector3f[] cubePositions = new Vector3f[]{
-            new Vector3f(0.0f, 0.0f, -3.0f),
+    /*Vector3f[] cubePositions = new Vector3f[]{
+            new Vector3f(0.0f, 0.0f, 0.0f),
             new Vector3f(2.0f, 5.0f, -15.0f),
             new Vector3f(-1.5f, -2.2f, -2.5f),
             new Vector3f(-3.8f, -2.0f, -12.3f),
@@ -65,17 +65,17 @@ public class Main {
 
     Random r = new Random();
     Vector3f[] cubeRotations = new Vector3f[]{
-            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
-            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
-            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
-            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
-            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
-            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
-            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
-            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
-            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
-            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
-    };
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+    };*/
 
     private void init() throws Exception {
         glEnable(GL_DEPTH_TEST);
@@ -85,52 +85,62 @@ public class Main {
         shaderProgram.createFragmentShader("shaders/fragment.fs");
         shaderProgram.link();
 
+        lightingShader = new ShaderProgram();
+        lightingShader.createVertexShader("shaders/lighting.vs");
+        lightingShader.createFragmentShader("shaders/lighting.fs");
+        lightingShader.link();
+
+        lampShader = new ShaderProgram();
+        lampShader.createVertexShader("shaders/lamp.vs");
+        lampShader.createFragmentShader("shaders/lamp.fs");
+        lampShader.link();
+
 
         float[] vertices = new float[]{
-                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-                0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+                -0.5f, -0.5f, -0.5f,
+                0.5f, -0.5f, -0.5f,
+                0.5f, 0.5f, -0.5f,
+                0.5f, 0.5f, -0.5f,
+                -0.5f, 0.5f, -0.5f,
+                -0.5f, -0.5f, -0.5f,
 
-                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-                0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-                0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-                -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                -0.5f, -0.5f, 0.5f,
+                0.5f, -0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f,
+                -0.5f, 0.5f, 0.5f,
+                -0.5f, -0.5f, 0.5f,
 
-                -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-                -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-                -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                -0.5f, 0.5f, 0.5f,
+                -0.5f, 0.5f, -0.5f,
+                -0.5f, -0.5f, -0.5f,
+                -0.5f, -0.5f, -0.5f,
+                -0.5f, -0.5f, 0.5f,
+                -0.5f, 0.5f, 0.5f,
 
-                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-                0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-                0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-                0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, -0.5f,
+                0.5f, -0.5f, -0.5f,
+                0.5f, -0.5f, -0.5f,
+                0.5f, -0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f,
 
-                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-                0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f,
+                0.5f, -0.5f, -0.5f,
+                0.5f, -0.5f, 0.5f,
+                0.5f, -0.5f, 0.5f,
+                -0.5f, -0.5f, 0.5f,
+                -0.5f, -0.5f, -0.5f,
 
-                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-                -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
+                -0.5f, 0.5f, -0.5f,
+                0.5f, 0.5f, -0.5f,
+                0.5f, 0.5f, 0.5f,
+                0.5f, 0.5f, 0.5f,
+                -0.5f, 0.5f, 0.5f,
+                -0.5f, 0.5f, -0.5f
         };
 
-        int[] indices = new int[]{  // Note that we start from 0!
+        /*int[] indices = new int[]{  // Note that we start from 0!
                 0, 1, 3,   // First Triangle
                 1, 2, 3    // Second Triangle
         };
@@ -147,34 +157,39 @@ public class Main {
                 1.0f, 0.0f,  // Lower-right corner
                 0.0f, 0.0f,  // Top-center corner
                 0.0f, 1.0f,  // Top-center corner
-        };
-
-        int floatByteSize = 4;
-        int positionFloatCount = 3;
-        int textureFloatCount = 2;
-        int floatsPerVertex = positionFloatCount + textureFloatCount;
-        int vertexFloatSizeInBytes = floatByteSize * floatsPerVertex;
+        };*/
 
         VAO = glGenVertexArrays();
-        glBindVertexArray(VAO);
-
         VBO = glGenBuffers();
+
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         FloatBuffer fb = BufferUtils.createFloatBuffer(vertices.length);
         fb.put(vertices).flip();
         glBufferData(GL_ARRAY_BUFFER, fb, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexFloatSizeInBytes, 0);
-        glEnableVertexAttribArray(0);
 
-        int byteOffset = floatByteSize * positionFloatCount;
+        glBindVertexArray(VAO);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(0);
+        glBindVertexArray(0);
+
+        /*int byteOffset = floatByteSize * positionFloatCount;
         glVertexAttribPointer(2, 2, GL_FLOAT, false, vertexFloatSizeInBytes, byteOffset);
-        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(2);*/
+
+
+        lightVAO = glGenVertexArrays();
+        glBindVertexArray(lightVAO);
+        // We only need to bind to the VBO (to link it with glVertexAttribPointer), no need to fill it; the VBO's data already contains all we need.
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(0);
+        glBindVertexArray(0);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
-        texture1 = Texture.getTexture("container.jpg");
-        texture2 = Texture.getTexture("awesomeFace.png");
+        //texture1 = Texture.getTexture("container.jpg");
+        //texture2 = Texture.getTexture("awesomeFace.png");
 
         model = new Matrix4f();
         view = new Matrix4f();
@@ -190,32 +205,63 @@ public class Main {
     }
 
     private void render() {
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-        glActiveTexture(GL_TEXTURE0);
+        lightingShader.bind();
+        int objectColorLoc = glGetUniformLocation(lightingShader.programId, "objectColor");
+        int lightColorLoc = glGetUniformLocation(lightingShader.programId, "lightColor");
+        glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
+        glUniform3f(lightColorLoc, 1.0f, 0.5f, 1.0f);
+
+        float[] data = new float[16];
+
+        view = camera.getViewMatrix();
+        projection.identity().perspective(camera.Zoom, (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
+
+        int modelLoc = glGetUniformLocation(lightingShader.programId, "model");
+        int viewLoc = glGetUniformLocation(lightingShader.programId, "view");
+        int projLoc = glGetUniformLocation(lightingShader.programId, "projection");
+
+        glUniformMatrix4fv(projLoc, false, projection.get(data));
+        glUniformMatrix4fv(viewLoc, false, view.get(data));
+
+        glBindVertexArray(VAO);
+        model.identity();
+        glUniformMatrix4fv(modelLoc, false, model.get(data));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+
+        lampShader.bind();
+        modelLoc = glGetUniformLocation(lightingShader.programId, "model");
+        viewLoc = glGetUniformLocation(lightingShader.programId, "view");
+        projLoc = glGetUniformLocation(lightingShader.programId, "projection");
+
+        glUniformMatrix4fv(projLoc, false, projection.get(data));
+        glUniformMatrix4fv(viewLoc, false, view.get(data));
+
+        model.identity().translate(lightPos).scale(0.2f);
+        glUniformMatrix4fv(modelLoc, false, model.get(data));
+        glBindVertexArray(lightVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+
+
+        /*glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glUniform1i(glGetUniformLocation(shaderProgram.programId, "ourTexture1"), 0);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
-        glUniform1i(glGetUniformLocation(shaderProgram.programId, "ourTexture2"), 1);
+        glUniform1i(glGetUniformLocation(shaderProgram.programId, "ourTexture2"), 1);*/
 
         shaderProgram.bind();
 
-        int modelLoc = glGetUniformLocation(shaderProgram.programId, "model");
-        int viewLoc = glGetUniformLocation(shaderProgram.programId, "view");
-        int projLoc = glGetUniformLocation(shaderProgram.programId, "projection");
-
-        float[] data = new float[16];
 
         // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-        projection.identity().perspective(camera.Zoom, (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
-        glUniformMatrix4fv(projLoc, false, projection.get(data));
 
-        view = camera.getViewMatrix();
-        glUniformMatrix4fv(viewLoc, false, view.get(data));
+
 
         glBindVertexArray(VAO);
-        Quaternionf q = new Quaternionf();
+        /*Quaternionf q = new Quaternionf();
         for (int i = 0; i < cubePositions.length; i++) {
             Vector3f v = cubePositions[i];
             q.identity().rotate(cubeRotations[i].x, cubeRotations[i].y, cubeRotations[i].z);
@@ -223,9 +269,9 @@ public class Main {
 
             glUniformMatrix4fv(modelLoc, false, model.get(data));
             glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        }*/
 
-
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 
     }

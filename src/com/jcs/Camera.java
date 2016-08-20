@@ -32,7 +32,7 @@ public class Camera {
     public float Zoom;
 
     public Camera() {
-        Position = new Vector3f(0.0f, 0.0f, 0.0f);
+        Position = new Vector3f(0.0f, 0.0f, 3.0f);
         WorldUp = new Vector3f(0.0f, 1.0f, 0.0f);
         Yaw = -90.0f;
         Pitch = 0.0f;
