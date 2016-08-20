@@ -351,6 +351,7 @@ public class Main {
                 (vidmode.height() - HEIGHT) / 2
         );
 
+
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
         // Enable v-sync <- ups and fps = 60 / SwapInterval->
