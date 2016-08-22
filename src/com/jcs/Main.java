@@ -13,8 +13,7 @@ import java.nio.FloatBuffer;
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.glActiveTexture;
+import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
@@ -29,7 +28,6 @@ public class Main {
     // The window handle
     private long window;
 
-    ShaderProgram shaderProgram;
     ShaderProgram lightingShader;
     ShaderProgram lampShader;
     //int texture1;
@@ -51,7 +49,7 @@ public class Main {
     double lastX = WIDTH / 2.0;
     double lastY = HEIGHT / 2.0;
 
-    int texture;
+    int textureDiffuse, textureSpecular, textureMatrix;
 
     /*Vector3f[] cubePositions = new Vector3f[]{
             new Vector3f(0.0f, 0.0f, 0.0f),
@@ -83,11 +81,6 @@ public class Main {
 
     private void init() throws Exception {
         glEnable(GL_DEPTH_TEST);
-
-        shaderProgram = new ShaderProgram();
-        shaderProgram.createVertexShader("shaders/vertex.vs");
-        shaderProgram.createFragmentShader("shaders/fragment.fs");
-        shaderProgram.link();
 
         lightingShader = new ShaderProgram();
         lightingShader.createVertexShader("shaders/lighting.vs");
@@ -215,7 +208,9 @@ public class Main {
         projection = new Matrix4f();
 
 
-        texture = Texture.getTexture("container2.png");
+        textureDiffuse = Texture.getTexture("container2.png");
+        textureSpecular = Texture.getTexture("container2_specular.png");
+        textureMatrix = Texture.getTexture("matrix.jpg");
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
@@ -253,10 +248,12 @@ public class Main {
 
         int matDiffuseLoc = glGetUniformLocation(lightingShader.programId, "material.diffuse");
         int matSpecularLoc = glGetUniformLocation(lightingShader.programId, "material.specular");
+        int matEmissionLoc = glGetUniformLocation(lightingShader.programId, "material.emission");
         int matShineLoc = glGetUniformLocation(lightingShader.programId, "material.shininess");
 
         glUniform1i(matDiffuseLoc, 0);
-        glUniform3f(matSpecularLoc, 0.5f, 0.5f, 0.5f);
+        glUniform1i(matSpecularLoc, 1);
+        glUniform1i(matEmissionLoc, 2);
         glUniform1f(matShineLoc, 32.0f);
 
         int viewPosLoc = glGetUniformLocation(lightingShader.programId, "viewPos");
@@ -276,7 +273,12 @@ public class Main {
         glUniformMatrix4fv(viewLoc, false, view.get(data));
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, textureDiffuse);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, textureSpecular);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, textureMatrix);
+
         glBindVertexArray(VAO);
         model.identity();
         glUniformMatrix4fv(modelLoc, false, model.get(data));
@@ -361,7 +363,7 @@ public class Main {
     }
 
     private void destroy() {
-        shaderProgram.cleanup();
+
     }
 
     private void initGLFW() {
