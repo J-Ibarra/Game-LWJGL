@@ -223,6 +223,16 @@ public class Main {
          */
         lightingShader.bind();
 
+        int lightPosLoc = glGetUniformLocation(lightingShader.programId, "light.position");
+        int lightAmbientLoc = glGetUniformLocation(lightingShader.programId, "light.ambient");
+        int lightDiffuseLoc = glGetUniformLocation(lightingShader.programId, "light.diffuse");
+        int lightSpecularLoc = glGetUniformLocation(lightingShader.programId, "light.specular");
+
+        glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
+        glUniform3f(lightAmbientLoc, 0.2f, 0.2f, 0.2f);
+        glUniform3f(lightDiffuseLoc, 0.5f, 0.5f, 0.5f); // Let's darken the light a bit to fit the scene
+        glUniform3f(lightSpecularLoc, 1.0f, 1.0f, 1.0f);
+
         int matAmbientLoc = glGetUniformLocation(lightingShader.programId, "material.ambient");
         int matDiffuseLoc = glGetUniformLocation(lightingShader.programId, "material.diffuse");
         int matSpecularLoc = glGetUniformLocation(lightingShader.programId, "material.specular");
@@ -233,14 +243,8 @@ public class Main {
         glUniform3f(matSpecularLoc, 0.5f, 0.5f, 0.5f);
         glUniform1f(matShineLoc, 32.0f);
 
-        int objectColorLoc = glGetUniformLocation(lightingShader.programId, "objectColor");
-        int lightColorLoc = glGetUniformLocation(lightingShader.programId, "lightColor");
-        int lightPosLoc = glGetUniformLocation(lightingShader.programId, "lightPos");
         int viewPosLoc = glGetUniformLocation(lightingShader.programId, "viewPos");
 
-        glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
-        glUniform3f(lightColorLoc, 1.0f, 0.5f, 1.0f);
-        glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
         glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
 
         float[] data = new float[16];
