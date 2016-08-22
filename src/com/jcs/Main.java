@@ -217,7 +217,22 @@ public class Main {
     private void render() {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
+
+        /**
+         * Render Scene
+         */
         lightingShader.bind();
+
+        int matAmbientLoc = glGetUniformLocation(lightingShader.programId, "material.ambient");
+        int matDiffuseLoc = glGetUniformLocation(lightingShader.programId, "material.diffuse");
+        int matSpecularLoc = glGetUniformLocation(lightingShader.programId, "material.specular");
+        int matShineLoc = glGetUniformLocation(lightingShader.programId, "material.shininess");
+
+        glUniform3f(matAmbientLoc, 1.0f, 0.5f, 0.31f);
+        glUniform3f(matDiffuseLoc, 1.0f, 0.5f, 0.31f);
+        glUniform3f(matSpecularLoc, 0.5f, 0.5f, 0.5f);
+        glUniform1f(matShineLoc, 32.0f);
+
         int objectColorLoc = glGetUniformLocation(lightingShader.programId, "objectColor");
         int lightColorLoc = glGetUniformLocation(lightingShader.programId, "lightColor");
         int lightPosLoc = glGetUniformLocation(lightingShader.programId, "lightPos");
@@ -246,15 +261,19 @@ public class Main {
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 
+
+        /**
+         * Render Lamp
+         */
         lampShader.bind();
-        modelLoc = glGetUniformLocation(lightingShader.programId, "model");
-        viewLoc = glGetUniformLocation(lightingShader.programId, "view");
-        projLoc = glGetUniformLocation(lightingShader.programId, "projection");
+        modelLoc = glGetUniformLocation(lampShader.programId, "model");
+        viewLoc = glGetUniformLocation(lampShader.programId, "view");
+        projLoc = glGetUniformLocation(lampShader.programId, "projection");
 
         glUniformMatrix4fv(projLoc, false, projection.get(data));
         glUniformMatrix4fv(viewLoc, false, view.get(data));
 
-        model.identity().translate(lightPos).scale(0.2f);
+        model.identity().translate(lightPos).scale(0.1f);
         glUniformMatrix4fv(modelLoc, false, model.get(data));
         glBindVertexArray(lightVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -264,7 +283,7 @@ public class Main {
 
     private boolean firstMouse = true;
 
-    public void mouseCallbac(long window, double xpos, double ypos) {
+    public void mouseCallback(long window, double xpos, double ypos) {
         if (firstMouse) {
             lastX = xpos;
             lastY = ypos;
@@ -307,7 +326,7 @@ public class Main {
             keys[key] = action != GLFW_RELEASE;
         });
 
-        glfwSetCursorPosCallback(window, this::mouseCallbac);
+        glfwSetCursorPosCallback(window, this::mouseCallback);
         glfwSetScrollCallback(window, this::scrollCallback);
 
         glfwSetWindowSizeCallback(window, (window, width, height) -> {
@@ -343,12 +362,12 @@ public class Main {
             throw new RuntimeException("Failed to create the GLFW window");
 
         // Get the resolution of the primary monitor
-        GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        GLFWVidMode vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
         // Center our window
         glfwSetWindowPos(
                 window,
-                (vidmode.width() - WIDTH) / 2,
-                (vidmode.height() - HEIGHT) / 2
+                (vidMode.width() - WIDTH) / 2,
+                (vidMode.height() - HEIGHT) / 2
         );
 
 
