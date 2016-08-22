@@ -50,7 +50,7 @@ public class Main {
     double lastY = HEIGHT / 2.0;
 
     Vector3f[] cubePositions = new Vector3f[]{
-            new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, -3.0f),
             new Vector3f(2.0f, 5.0f, -15.0f),
             new Vector3f(-1.5f, -2.2f, -2.5f),
             new Vector3f(-3.8f, -2.0f, -12.3f),
@@ -65,16 +65,16 @@ public class Main {
 
     Random r = new Random();
     Vector3f[] cubeRotations = new Vector3f[]{
-            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
-            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
-            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
-            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
-            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
-            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
-            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
-            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
-            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
-            new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
+            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
+            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
+            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
+            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
+            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
+            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
+            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
+            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
+            new Vector3f(r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1, r.nextFloat() * 2 - 1),
     };
 
     private void init() throws Exception {
