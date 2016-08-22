@@ -87,10 +87,7 @@ public class Main {
         lightingShader.createFragmentShader("shaders/lighting.fs");
         lightingShader.link();
 
-        lampShader = new ShaderProgram();
-        lampShader.createVertexShader("shaders/lamp.vs");
-        lampShader.createFragmentShader("shaders/lamp.fs");
-        lampShader.link();
+        lampShader = new ShaderProgram("shaders/lamp.vs","shaders/lamp.fs");
 
 
         float[] vertices = new float[]{

@@ -25,6 +25,17 @@ public class ShaderProgram {
         }
     }
 
+    public ShaderProgram(String vsPath, String fsPath) throws Exception {
+        programId = glCreateProgram();
+        if (programId == 0) {
+            throw new Exception("Could not create Shader");
+        }
+
+        createVertexShader(vsPath);
+        createFragmentShader(fsPath);
+        link();
+    }
+
     public void createVertexShader(String path) throws Exception {
         vsId = createShader(path, GL_VERTEX_SHADER);
         glAttachShader(programId, vsId);
