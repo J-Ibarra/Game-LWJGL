@@ -54,7 +54,7 @@ public class Main {
     int textureDiffuse, textureSpecular, textureMatrix;
 
     Vector3f[] cubePositions = new Vector3f[]{
-            new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, -3.0f),
             new Vector3f(2.0f, 5.0f, -15.0f),
             new Vector3f(-1.5f, -2.2f, -2.5f),
             new Vector3f(-3.8f, -2.0f, -12.3f),
