@@ -223,14 +223,22 @@ public class Main {
          */
         lightingShader.bind();
 
+        Vector3f lightColor = new Vector3f();
+        lightColor.x = (float) Math.sin(glfwGetTime() * 2.0f);
+        lightColor.y = (float) Math.sin(glfwGetTime() * 0.7f);
+        lightColor.z = (float) Math.sin(glfwGetTime() * 1.3f);
+
+        Vector3f diffuseColor = lightColor.mul(0.5f, new Vector3f()); // Decrease the influence
+        Vector3f ambientColor = diffuseColor.mul(0.2f, new Vector3f()); // Low influence
+
         int lightPosLoc = glGetUniformLocation(lightingShader.programId, "light.position");
         int lightAmbientLoc = glGetUniformLocation(lightingShader.programId, "light.ambient");
         int lightDiffuseLoc = glGetUniformLocation(lightingShader.programId, "light.diffuse");
         int lightSpecularLoc = glGetUniformLocation(lightingShader.programId, "light.specular");
 
         glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
-        glUniform3f(lightAmbientLoc, 0.2f, 0.2f, 0.2f);
-        glUniform3f(lightDiffuseLoc, 0.5f, 0.5f, 0.5f); // Let's darken the light a bit to fit the scene
+        glUniform3f(lightAmbientLoc, ambientColor.x, ambientColor.y, ambientColor.z);
+        glUniform3f(lightDiffuseLoc, diffuseColor.x, diffuseColor.y, diffuseColor.z); // Let's darken the light a bit to fit the scene
         glUniform3f(lightSpecularLoc, 1.0f, 1.0f, 1.0f);
 
         int matAmbientLoc = glGetUniformLocation(lightingShader.programId, "material.ambient");
