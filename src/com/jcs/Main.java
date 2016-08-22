@@ -1,6 +1,7 @@
 package com.jcs;
 
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
@@ -9,6 +10,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import java.nio.FloatBuffer;
+import java.util.Random;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -28,13 +30,12 @@ public class Main {
     // The window handle
     private long window;
 
-    ShaderProgram lightingShader;
-    ShaderProgram lampShader;
-    //int texture1;
-    //int texture2;
+    ShaderProgram shaderProgram;
+
+    int texture1;
+    int texture2;
 
     int VBO, VAO;
-    int lightVAO;
 
     Matrix4f model;
     Matrix4f view;
@@ -42,16 +43,13 @@ public class Main {
 
     boolean[] keys = new boolean[GLFW_KEY_LAST];
 
-    public Camera camera = new Camera();
+    public Camera camera = new Camera() {
 
-    Vector3f lightPos = new Vector3f(1.2f, 1.0f, 2.0f);
-
+    };
     double lastX = WIDTH / 2.0;
     double lastY = HEIGHT / 2.0;
 
-    int textureDiffuse, textureSpecular, textureMatrix;
-
-    /*Vector3f[] cubePositions = new Vector3f[]{
+    Vector3f[] cubePositions = new Vector3f[]{
             new Vector3f(0.0f, 0.0f, 0.0f),
             new Vector3f(2.0f, 5.0f, -15.0f),
             new Vector3f(-1.5f, -2.2f, -2.5f),
@@ -77,65 +75,62 @@ public class Main {
             new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
             new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
             new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
-    };*/
+    };
 
     private void init() throws Exception {
         glEnable(GL_DEPTH_TEST);
 
-        lightingShader = new ShaderProgram();
-        lightingShader.createVertexShader("shaders/lighting.vs");
-        lightingShader.createFragmentShader("shaders/lighting.fs");
-        lightingShader.link();
-
-        lampShader = new ShaderProgram("shaders/lamp.vs","shaders/lamp.fs");
+        shaderProgram = new ShaderProgram();
+        shaderProgram.createVertexShader("shaders/vertex.vs");
+        shaderProgram.createFragmentShader("shaders/fragment.fs");
+        shaderProgram.link();
 
 
         float[] vertices = new float[]{
-                // Positions          // Normals           // Texture Coords
-                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
-                0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-                0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-                0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-                -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
-                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+                0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
 
-                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-                0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+                -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
 
-                -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-                -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-                -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-                -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-                -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+                -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
 
-                0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-                0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-                0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-                0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-                0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
 
-                -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-                0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
-                0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-                0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-                -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-                -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+                -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+                -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
 
-                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-                0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-                0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-                0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-                -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f
+                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+                0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+                -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+                -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
         };
 
-        /*int[] indices = new int[]{  // Note that we start from 0!
+        int[] indices = new int[]{  // Note that we start from 0!
                 0, 1, 3,   // First Triangle
                 1, 2, 3    // Second Triangle
         };
@@ -152,62 +147,40 @@ public class Main {
                 1.0f, 0.0f,  // Lower-right corner
                 0.0f, 0.0f,  // Top-center corner
                 0.0f, 1.0f,  // Top-center corner
-        };*/
+        };
 
         int floatByteSize = 4;
         int positionFloatCount = 3;
-        int normalFloatCount = 3;
-        int textureFloatCunt = 2;
-        int floatsPerVertex = positionFloatCount + normalFloatCount + textureFloatCunt;
+        int textureFloatCount = 2;
+        int floatsPerVertex = positionFloatCount + textureFloatCount;
         int vertexFloatSizeInBytes = floatByteSize * floatsPerVertex;
 
-        /**
-         * Cube
-         * */
         VAO = glGenVertexArrays();
         glBindVertexArray(VAO);
-        VBO = glGenBuffers();
 
+        VBO = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         FloatBuffer fb = BufferUtils.createFloatBuffer(vertices.length);
         fb.put(vertices).flip();
         glBufferData(GL_ARRAY_BUFFER, fb, GL_STATIC_DRAW);
-
         glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexFloatSizeInBytes, 0);
         glEnableVertexAttribArray(0);
+
         int byteOffset = floatByteSize * positionFloatCount;
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, vertexFloatSizeInBytes, byteOffset);
-        glEnableVertexAttribArray(1);
-        byteOffset = floatByteSize * (positionFloatCount + normalFloatCount);
         glVertexAttribPointer(2, 2, GL_FLOAT, false, vertexFloatSizeInBytes, byteOffset);
         glEnableVertexAttribArray(2);
 
-        glBindVertexArray(0);
-
-
-        /**
-         * Light
-         */
-
-        lightVAO = glGenVertexArrays();
-        glBindVertexArray(lightVAO);
-        // We only need to bind to the VBO (to link it with glVertexAttribPointer), no need to fill it; the VBO's data already contains all we need.
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexFloatSizeInBytes, 0);
-        glEnableVertexAttribArray(0);
-        glBindVertexArray(0);
-
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+
+        texture1 = Texture.getTexture("container.jpg");
+        texture2 = Texture.getTexture("awesomeFace.png");
 
         model = new Matrix4f();
         view = new Matrix4f();
         projection = new Matrix4f();
 
 
-        textureDiffuse = Texture.getTexture("container2.png");
-        textureSpecular = Texture.getTexture("container2_specular.png");
-        textureMatrix = Texture.getTexture("matrix.jpg");
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
@@ -217,94 +190,50 @@ public class Main {
     }
 
     private void render() {
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glUniform1i(glGetUniformLocation(shaderProgram.programId, "ourTexture1"), 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+        glUniform1i(glGetUniformLocation(shaderProgram.programId, "ourTexture2"), 1);
 
-        /**
-         * Render Scene
-         */
-        lightingShader.bind();
+        shaderProgram.bind();
 
-        Vector3f lightColor = new Vector3f();
-        lightColor.x = (float) Math.sin(glfwGetTime() * 2.0f);
-        lightColor.y = (float) Math.sin(glfwGetTime() * 0.7f);
-        lightColor.z = (float) Math.sin(glfwGetTime() * 1.3f);
-
-        Vector3f diffuseColor = lightColor.mul(0.5f, new Vector3f()); // Decrease the influence
-        Vector3f ambientColor = diffuseColor.mul(0.2f, new Vector3f()); // Low influence
-
-        int lightPosLoc = glGetUniformLocation(lightingShader.programId, "light.position");
-        int lightAmbientLoc = glGetUniformLocation(lightingShader.programId, "light.ambient");
-        int lightDiffuseLoc = glGetUniformLocation(lightingShader.programId, "light.diffuse");
-        int lightSpecularLoc = glGetUniformLocation(lightingShader.programId, "light.specular");
-
-        glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
-        glUniform3f(lightAmbientLoc, ambientColor.x, ambientColor.y, ambientColor.z);
-        glUniform3f(lightDiffuseLoc, diffuseColor.x, diffuseColor.y, diffuseColor.z); // Let's darken the light a bit to fit the scene
-        glUniform3f(lightSpecularLoc, 1.0f, 1.0f, 1.0f);
-
-        int matDiffuseLoc = glGetUniformLocation(lightingShader.programId, "material.diffuse");
-        int matSpecularLoc = glGetUniformLocation(lightingShader.programId, "material.specular");
-        int matEmissionLoc = glGetUniformLocation(lightingShader.programId, "material.emission");
-        int matShineLoc = glGetUniformLocation(lightingShader.programId, "material.shininess");
-
-        glUniform1i(matDiffuseLoc, 0);
-        glUniform1i(matSpecularLoc, 1);
-        glUniform1i(matEmissionLoc, 2);
-        glUniform1f(matShineLoc, 32.0f);
-
-        int viewPosLoc = glGetUniformLocation(lightingShader.programId, "viewPos");
-
-        glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
+        int modelLoc = glGetUniformLocation(shaderProgram.programId, "model");
+        int viewLoc = glGetUniformLocation(shaderProgram.programId, "view");
+        int projLoc = glGetUniformLocation(shaderProgram.programId, "projection");
 
         float[] data = new float[16];
 
-        view = camera.getViewMatrix();
+        // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
         projection.identity().perspective(camera.Zoom, (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
-
-        int modelLoc = glGetUniformLocation(lightingShader.programId, "model");
-        int viewLoc = glGetUniformLocation(lightingShader.programId, "view");
-        int projLoc = glGetUniformLocation(lightingShader.programId, "projection");
-
         glUniformMatrix4fv(projLoc, false, projection.get(data));
-        glUniformMatrix4fv(viewLoc, false, view.get(data));
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureDiffuse);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, textureSpecular);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, textureMatrix);
+        view = camera.getViewMatrix();
+        glUniformMatrix4fv(viewLoc, false, view.get(data));
 
         glBindVertexArray(VAO);
-        model.identity();
-        glUniformMatrix4fv(modelLoc, false, model.get(data));
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
+        Quaternionf q = new Quaternionf();
+        float angle = (float) glfwGetTime();
+        for (int i = 0; i < cubePositions.length; i++) {
+            Vector3f v = cubePositions[i];
+            q.identity().rotateAxis(angle, cubeRotations[i]);
+            model.identity().translate(v).rotate(q);
+
+            glUniformMatrix4fv(modelLoc, false, model.get(data));
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
 
-        /**
-         * Render Lamp
-         */
-        lampShader.bind();
-        modelLoc = glGetUniformLocation(lampShader.programId, "model");
-        viewLoc = glGetUniformLocation(lampShader.programId, "view");
-        projLoc = glGetUniformLocation(lampShader.programId, "projection");
-
-        glUniformMatrix4fv(projLoc, false, projection.get(data));
-        glUniformMatrix4fv(viewLoc, false, view.get(data));
-
-        model.identity().translate(lightPos).scale(0.1f);
-        glUniformMatrix4fv(modelLoc, false, model.get(data));
-        glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 
     }
 
     private boolean firstMouse = true;
 
-    public void mouseCallback(long window, double xpos, double ypos) {
+    public void mouseCallbac(long window, double xpos, double ypos) {
         if (firstMouse) {
             lastX = xpos;
             lastY = ypos;
@@ -335,19 +264,15 @@ public class Main {
     }
 
     private void initCallbacks() {
-
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-            if (key == GLFW_KEY_UNKNOWN)
-                return;
-
             if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
                 glfwSetWindowShouldClose(window, true); // We will detect this in our rendering loop
 
             keys[key] = action != GLFW_RELEASE;
         });
 
-        glfwSetCursorPosCallback(window, this::mouseCallback);
+        glfwSetCursorPosCallback(window, this::mouseCallbac);
         glfwSetScrollCallback(window, this::scrollCallback);
 
         glfwSetWindowSizeCallback(window, (window, width, height) -> {
@@ -360,7 +285,7 @@ public class Main {
     }
 
     private void destroy() {
-
+        shaderProgram.cleanup();
     }
 
     private void initGLFW() {
@@ -383,19 +308,18 @@ public class Main {
             throw new RuntimeException("Failed to create the GLFW window");
 
         // Get the resolution of the primary monitor
-        GLFWVidMode vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
         // Center our window
         glfwSetWindowPos(
                 window,
-                (vidMode.width() - WIDTH) / 2,
-                (vidMode.height() - HEIGHT) / 2
+                (vidmode.width() - WIDTH) / 2,
+                (vidmode.height() - HEIGHT) / 2
         );
-
 
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
         // Enable v-sync <- ups and fps = 60 / SwapInterval->
-        glfwSwapInterval(1);
+        glfwSwapInterval(0);
 
         // Make the window visible
         glfwShowWindow(window);
