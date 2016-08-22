@@ -1,6 +1,7 @@
 package com.jcs;
 
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
@@ -9,6 +10,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import java.nio.FloatBuffer;
+import java.util.Random;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -51,7 +53,7 @@ public class Main {
 
     int textureDiffuse, textureSpecular, textureMatrix;
 
-    /*Vector3f[] cubePositions = new Vector3f[]{
+    Vector3f[] cubePositions = new Vector3f[]{
             new Vector3f(0.0f, 0.0f, 0.0f),
             new Vector3f(2.0f, 5.0f, -15.0f),
             new Vector3f(-1.5f, -2.2f, -2.5f),
@@ -77,7 +79,7 @@ public class Main {
             new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
             new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
             new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
-    };*/
+    };
 
     private void init() throws Exception {
         glEnable(GL_DEPTH_TEST);
@@ -229,22 +231,26 @@ public class Main {
         lightingShader.bind();
 
         Vector3f lightColor = new Vector3f();
-        lightColor.x = (float) Math.sin(glfwGetTime() * 2.0f);
+        /*lightColor.x = (float) Math.sin(glfwGetTime() * 2.0f);
         lightColor.y = (float) Math.sin(glfwGetTime() * 0.7f);
-        lightColor.z = (float) Math.sin(glfwGetTime() * 1.3f);
+        lightColor.z = (float) Math.sin(glfwGetTime() * 1.3f);*/
+        lightColor.set(1.0f, 1.0f, 1.0f);
+
 
         Vector3f diffuseColor = lightColor.mul(0.5f, new Vector3f()); // Decrease the influence
         Vector3f ambientColor = diffuseColor.mul(0.2f, new Vector3f()); // Low influence
 
-        int lightPosLoc = glGetUniformLocation(lightingShader.programId, "light.position");
+        //int lightPosLoc = glGetUniformLocation(lightingShader.programId, "light.position");
+        int lightDirPos = glGetUniformLocation(lightingShader.programId, "light.direction");
         int lightAmbientLoc = glGetUniformLocation(lightingShader.programId, "light.ambient");
         int lightDiffuseLoc = glGetUniformLocation(lightingShader.programId, "light.diffuse");
         int lightSpecularLoc = glGetUniformLocation(lightingShader.programId, "light.specular");
 
-        glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
+        glUniform3f(lightDirPos, -0.2f, -1.0f, -0.3f);
+        //glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
         glUniform3f(lightAmbientLoc, ambientColor.x, ambientColor.y, ambientColor.z);
         glUniform3f(lightDiffuseLoc, diffuseColor.x, diffuseColor.y, diffuseColor.z); // Let's darken the light a bit to fit the scene
-        glUniform3f(lightSpecularLoc, 1.0f, 1.0f, 1.0f);
+        glUniform3f(lightSpecularLoc, lightColor.x, lightColor.y, lightColor.z);
 
         int matDiffuseLoc = glGetUniformLocation(lightingShader.programId, "material.diffuse");
         int matSpecularLoc = glGetUniformLocation(lightingShader.programId, "material.specular");
@@ -277,12 +283,20 @@ public class Main {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, textureSpecular);
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, textureMatrix);
+        glBindTexture(GL_TEXTURE_2D, -1);
+
 
         glBindVertexArray(VAO);
-        model.identity();
-        glUniformMatrix4fv(modelLoc, false, model.get(data));
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        Quaternionf q = new Quaternionf();
+        float angle = (float) glfwGetTime();
+        for (int i = 0; i < cubePositions.length; i++) {
+            Vector3f v = cubePositions[i];
+            q.identity().rotateAxis(angle, cubeRotations[i]);
+            model.identity().translate(v).rotate(q);
+
+            glUniformMatrix4fv(modelLoc, false, model.get(data));
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
         glBindVertexArray(0);
 
 
