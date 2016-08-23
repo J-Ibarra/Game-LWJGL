@@ -271,10 +271,10 @@ public class Main {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureDiffuse);
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, textureSpecular);
-        glActiveTexture(GL_TEXTURE2);
+        //glBindTexture(GL_TEXTURE_2D, textureSpecular);
+        //glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, textureMatrix);
-
+        //glBindTexture(GL_TEXTURE_2D, -1);
 
         glBindVertexArray(VAO);
         Quaternionf q = new Quaternionf();
@@ -321,12 +321,12 @@ public class Main {
             firstMouse = false;
         }
 
-        float xoffset = (float) (xpos - lastX);
-        float yoffset = (float) (lastY - ypos);
+        float xOffset = (float) (xpos - lastX);
+        float yOffset = (float) (lastY - ypos);
         lastX = xpos;
         lastY = ypos;
 
-        camera.ProcessMouseMovement(xoffset, yoffset);
+        camera.ProcessMouseMovement(xOffset, yOffset);
     }
 
     public void scrollCallback(long window, double xoffset, double yoffset) {
@@ -334,6 +334,11 @@ public class Main {
     }
 
     public void movement(float deltaTime) {
+        if(keys[GLFW_KEY_P])
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        if(keys[GLFW_KEY_O])
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
         if (keys[GLFW_KEY_W])
             camera.ProcessKeyboard(Camera.Camera_Movement.FORWARD, deltaTime);
         if (keys[GLFW_KEY_S])
@@ -410,7 +415,7 @@ public class Main {
         // Make the window visible
         glfwShowWindow(window);
 
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 
     private void loop() throws Exception {
