@@ -249,9 +249,11 @@ public class Main {
         int lightLinearLoc = glGetUniformLocation(lightingShader.programId, "light.linear");
         int lightQuadLoc = glGetUniformLocation(lightingShader.programId, "light.quadratic");
         int lightSpotCutOffLoc = glGetUniformLocation(lightingShader.programId, "light.cutOff");
+        int lightSpotOuterCutOffLoc = glGetUniformLocation(lightingShader.programId, "light.outerCutOff");
 
         glUniform3f(lightSpotdirLoc, camera.Front.x, camera.Front.y, camera.Front.z);
         glUniform1f(lightSpotCutOffLoc, (float) Math.cos(Math.toRadians(12.5f)));
+        glUniform1f(lightSpotOuterCutOffLoc, (float) Math.cos(Math.toRadians(17.5f)));
         //glUniform3f(lightDirPos, -0.2f, -1.0f, -0.3f);
         //glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
         glUniform3f(lightPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
