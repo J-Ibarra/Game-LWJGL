@@ -241,17 +241,20 @@ public class Main {
         Vector3f ambientColor = diffuseColor.mul(0.2f, new Vector3f()); // Low influence
 
         int lightPosLoc = glGetUniformLocation(lightingShader.programId, "light.position");
-        //int lightDirPos = glGetUniformLocation(lightingShader.programId, "light.direction");
+        int lightSpotdirLoc = glGetUniformLocation(lightingShader.programId, "light.direction");
         int lightAmbientLoc = glGetUniformLocation(lightingShader.programId, "light.ambient");
         int lightDiffuseLoc = glGetUniformLocation(lightingShader.programId, "light.diffuse");
         int lightSpecularLoc = glGetUniformLocation(lightingShader.programId, "light.specular");
         int lightConstLoc = glGetUniformLocation(lightingShader.programId, "light.constant");
         int lightLinearLoc = glGetUniformLocation(lightingShader.programId, "light.linear");
         int lightQuadLoc = glGetUniformLocation(lightingShader.programId, "light.quadratic");
+        int lightSpotCutOffLoc = glGetUniformLocation(lightingShader.programId, "light.cutOff");
 
-
+        glUniform3f(lightSpotdirLoc, camera.Front.x, camera.Front.y, camera.Front.z);
+        glUniform1f(lightSpotCutOffLoc, (float) Math.cos(Math.toRadians(12.5f)));
         //glUniform3f(lightDirPos, -0.2f, -1.0f, -0.3f);
-        glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
+        //glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
+        glUniform3f(lightPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
         glUniform3f(lightAmbientLoc, ambientColor.x, ambientColor.y, ambientColor.z);
         glUniform3f(lightDiffuseLoc, diffuseColor.x, diffuseColor.y, diffuseColor.z); // Let's darken the light a bit to fit the scene
         glUniform3f(lightSpecularLoc, lightColor.x, lightColor.y, lightColor.z);

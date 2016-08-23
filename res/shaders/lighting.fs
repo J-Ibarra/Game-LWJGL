@@ -13,7 +13,7 @@ struct Material {
 };
 
 struct Light {
-    vec3 position;
+    //vec3 position;
     //vec3 direction;
     vec3 ambient;
     vec3 diffuse;
@@ -22,6 +22,10 @@ struct Light {
     float constant;
     float linear;
     float quadratic;
+
+    vec3  position;
+    vec3  direction;
+    float cutOff;
 };
 
 uniform Material material;
@@ -30,33 +34,43 @@ uniform vec3 viewPos;
 
 void main()
 {
-    // Ambient
-    //vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
-    vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
 
-    // Diffuse
-    vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(light.position - FragPos);
-    //vec3 lightDir = normalize(-light.direction);
-    float diff = max(dot(norm, lightDir), 0.0);
-    //vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
+vec3 lightDir = normalize(light.position - FragPos);
 
-    // Specular
-    vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    //vec3 specular = light.specular * (spec * material.specular);
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
+    // Check if lighting is inside the spotlight cone
+    float theta = dot(lightDir, normalize(-light.direction));
 
-    // Attenuation
-    float distance    = length(light.position - FragPos);
-    float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+    if(theta > light.cutOff) { // Remember that we're working with angles as cosines instead of degrees so a '>' is used.
+        // Ambient
+        //vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
+        vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
 
-    ambient  *= attenuation;
-    diffuse  *= attenuation;
-    specular *= attenuation;
+        // Diffuse
+        vec3 norm = normalize(Normal);
+       // vec3 lightDir = normalize(light.position - FragPos);
+        //vec3 lightDir = normalize(-light.direction);
+        float diff = max(dot(norm, lightDir), 0.0);
+        //vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
+        vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
 
-    vec3 result = ambient + diffuse + specular + vec3(texture(material.emission, TexCoords));;
-    color = vec4(result, 1.0f);
+        // Specular
+        vec3 viewDir = normalize(viewPos - FragPos);
+        vec3 reflectDir = reflect(-lightDir, norm);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+        //vec3 specular = light.specular * (spec * material.specular);
+        vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
+
+        // Attenuation
+        float distance    = length(light.position - FragPos);
+        float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+
+        //ambient  *= attenuation;
+        diffuse  *= attenuation;
+        specular *= attenuation;
+
+        vec3 result = ambient + diffuse + specular + vec3(texture(material.emission, TexCoords));;
+        color = vec4(result, 1.0f);
+    } else { // else, use ambient light so scene isn't completely dark outside the spotlight.
+        color = vec4(light.ambient * vec3(texture(material.diffuse, TexCoords)), 1.0f);
+    }
 }
