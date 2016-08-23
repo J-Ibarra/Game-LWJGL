@@ -32,8 +32,6 @@ public class Main {
 
     ShaderProgram lightingShader;
     ShaderProgram lampShader;
-    //int texture1;
-    //int texture2;
 
     int VBO, VAO;
     int lightVAO;
@@ -46,15 +44,13 @@ public class Main {
 
     public Camera camera = new Camera();
 
-    Vector3f lightPos = new Vector3f(1.2f, 1.0f, 2.0f);
-
     double lastX = WIDTH / 2.0;
     double lastY = HEIGHT / 2.0;
 
     int textureDiffuse, textureSpecular, textureMatrix;
 
     Vector3f[] cubePositions = new Vector3f[]{
-            new Vector3f(0.0f, 0.0f, -3.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f),
             new Vector3f(2.0f, 5.0f, -15.0f),
             new Vector3f(-1.5f, -2.2f, -2.5f),
             new Vector3f(-3.8f, -2.0f, -12.3f),
@@ -79,6 +75,13 @@ public class Main {
             new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
             new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
             new Vector3f(r.nextFloat(), r.nextFloat(), r.nextFloat()),
+    };
+
+    Vector3f pointLightPositions[] = new Vector3f[]{
+            new Vector3f(0.7f, 0.2f, 2.0f),
+            new Vector3f(2.3f, -3.3f, -4.0f),
+            new Vector3f(-4.0f, 2.0f, -12.0f),
+            new Vector3f(0.0f, 0.0f, -3.0f)
     };
 
     private void init() throws Exception {
@@ -139,25 +142,6 @@ public class Main {
                 -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
                 -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f
         };
-
-        /*int[] indices = new int[]{  // Note that we start from 0!
-                0, 1, 3,   // First Triangle
-                1, 2, 3    // Second Triangle
-        };
-
-        float[] colors = new float[]{
-                1.0f, 0.0f, 0.0f,
-                0.0f, 1.0f, 0.0f,
-                0.0f, 0.0f, 1.0f,
-                1.0f, 1.0f, 0.0f,
-        };
-
-        float[] texCoords = new float[]{
-                1.0f, 1.0f,  // Lower-left corner
-                1.0f, 0.0f,  // Lower-right corner
-                0.0f, 0.0f,  // Top-center corner
-                0.0f, 1.0f,  // Top-center corner
-        };*/
 
         int floatByteSize = 4;
         int positionFloatCount = 3;
@@ -230,39 +214,8 @@ public class Main {
          */
         lightingShader.bind();
 
-        Vector3f lightColor = new Vector3f();
-        /*lightColor.x = (float) Math.sin(glfwGetTime() * 2.0f);
-        lightColor.y = (float) Math.sin(glfwGetTime() * 0.7f);
-        lightColor.z = (float) Math.sin(glfwGetTime() * 1.3f);*/
-        lightColor.set(1.0f, 1.0f, 1.0f);
-
-
-        Vector3f diffuseColor = lightColor.mul(0.5f, new Vector3f()); // Decrease the influence
-        Vector3f ambientColor = diffuseColor.mul(0.2f, new Vector3f()); // Low influence
-
-        int lightPosLoc = glGetUniformLocation(lightingShader.programId, "light.position");
-        int lightSpotdirLoc = glGetUniformLocation(lightingShader.programId, "light.direction");
-        int lightAmbientLoc = glGetUniformLocation(lightingShader.programId, "light.ambient");
-        int lightDiffuseLoc = glGetUniformLocation(lightingShader.programId, "light.diffuse");
-        int lightSpecularLoc = glGetUniformLocation(lightingShader.programId, "light.specular");
-        int lightConstLoc = glGetUniformLocation(lightingShader.programId, "light.constant");
-        int lightLinearLoc = glGetUniformLocation(lightingShader.programId, "light.linear");
-        int lightQuadLoc = glGetUniformLocation(lightingShader.programId, "light.quadratic");
-        int lightSpotCutOffLoc = glGetUniformLocation(lightingShader.programId, "light.cutOff");
-        int lightSpotOuterCutOffLoc = glGetUniformLocation(lightingShader.programId, "light.outerCutOff");
-
-        glUniform3f(lightSpotdirLoc, camera.Front.x, camera.Front.y, camera.Front.z);
-        glUniform1f(lightSpotCutOffLoc, (float) Math.cos(Math.toRadians(12.5f)));
-        glUniform1f(lightSpotOuterCutOffLoc, (float) Math.cos(Math.toRadians(17.5f)));
-        //glUniform3f(lightDirPos, -0.2f, -1.0f, -0.3f);
-        //glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
-        glUniform3f(lightPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
-        glUniform3f(lightAmbientLoc, ambientColor.x, ambientColor.y, ambientColor.z);
-        glUniform3f(lightDiffuseLoc, diffuseColor.x, diffuseColor.y, diffuseColor.z); // Let's darken the light a bit to fit the scene
-        glUniform3f(lightSpecularLoc, lightColor.x, lightColor.y, lightColor.z);
-        glUniform1f(lightConstLoc, 1.0f);
-        glUniform1f(lightLinearLoc, 0.09f);
-        glUniform1f(lightQuadLoc, 0.032f);
+        int viewPosLoc = glGetUniformLocation(lightingShader.programId, "viewPos");
+        glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
 
         int matDiffuseLoc = glGetUniformLocation(lightingShader.programId, "material.diffuse");
         int matSpecularLoc = glGetUniformLocation(lightingShader.programId, "material.specular");
@@ -274,9 +227,34 @@ public class Main {
         glUniform1i(matEmissionLoc, 2);
         glUniform1f(matShineLoc, 32.0f);
 
-        int viewPosLoc = glGetUniformLocation(lightingShader.programId, "viewPos");
+        int dirLightDirLoc = glGetUniformLocation(lightingShader.programId, "dirLight.direction");
+        int dirLightAmbLoc = glGetUniformLocation(lightingShader.programId, "dirLight.ambient");
+        int dirLightDifLoc = glGetUniformLocation(lightingShader.programId, "dirLight.diffuse");
+        int dirLightSpeLoc = glGetUniformLocation(lightingShader.programId, "dirLight.specular");
 
-        glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
+        glUniform3f(dirLightDirLoc, -0.2f, -1.0f, -0.3f);
+        glUniform3f(dirLightAmbLoc, 0.05f, 0.05f, 0.05f);
+        glUniform3f(dirLightDifLoc, 0.4f, 0.4f, 0.4f);
+        glUniform3f(dirLightSpeLoc, 0.5f, 0.5f, 0.5f);
+
+        for (int i = 0; i < pointLightPositions.length; i++) {
+            int pointPosLoc = glGetUniformLocation(lightingShader.programId, "pointLights[" + i + "].position");
+            int pointAmbLoc = glGetUniformLocation(lightingShader.programId, "pointLights[" + i + "].ambient");
+            int pointDifLoc = glGetUniformLocation(lightingShader.programId, "pointLights[" + i + "].diffuse");
+            int pointSpeLoc = glGetUniformLocation(lightingShader.programId, "pointLights[" + i + "].specular");
+            int pointConLoc = glGetUniformLocation(lightingShader.programId, "pointLights[" + i + "].constant");
+            int pointLinLoc = glGetUniformLocation(lightingShader.programId, "pointLights[" + i + "].linear");
+            int pointQuaLoc = glGetUniformLocation(lightingShader.programId, "pointLights[" + i + "].quadratic");
+
+
+            glUniform3f(pointPosLoc, pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z);
+            glUniform3f(pointAmbLoc, 0.05f, 0.05f, 0.05f);
+            glUniform3f(pointDifLoc, 0.8f, 0.8f, 0.8f);
+            glUniform3f(pointSpeLoc, 1.0f, 1.0f, 1.0f);
+            glUniform1f(pointConLoc, 1.0f);
+            glUniform1f(pointLinLoc, 0.09f);
+            glUniform1f(pointQuaLoc, 0.032f);
+        }
 
         float[] data = new float[16];
 
@@ -295,7 +273,7 @@ public class Main {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, textureSpecular);
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, -1);
+        glBindTexture(GL_TEXTURE_2D, textureMatrix);
 
 
         glBindVertexArray(VAO);
@@ -323,10 +301,13 @@ public class Main {
         glUniformMatrix4fv(projLoc, false, projection.get(data));
         glUniformMatrix4fv(viewLoc, false, view.get(data));
 
-        model.identity().translate(lightPos).scale(0.1f);
-        glUniformMatrix4fv(modelLoc, false, model.get(data));
         glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (int i = 0; i < pointLightPositions.length; i++) {
+            Vector3f v = pointLightPositions[i];
+            model.identity().translate(v).scale(0.1f);
+            glUniformMatrix4fv(modelLoc, false, model.get(data));
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
         glBindVertexArray(0);
 
     }
