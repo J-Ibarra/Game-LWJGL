@@ -206,7 +206,7 @@ public class Main {
     }
 
     private void render() {
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 
 
         /**
@@ -233,9 +233,19 @@ public class Main {
         int dirLightSpeLoc = glGetUniformLocation(lightingShader.programId, "dirLight.specular");
 
         glUniform3f(dirLightDirLoc, -0.2f, -1.0f, -0.3f);
-        glUniform3f(dirLightAmbLoc, 0.05f, 0.05f, 0.05f);
-        glUniform3f(dirLightDifLoc, 0.4f, 0.4f, 0.4f);
-        glUniform3f(dirLightSpeLoc, 0.5f, 0.5f, 0.5f);
+        Vector3f dirLightColor = new Vector3f(1f, 1f, 1f);
+        Vector3f dirLightAmbColor = dirLightColor.mul(0.1f, new Vector3f());
+        Vector3f dirLightDifColor = dirLightColor.mul(0.4f, new Vector3f());
+        Vector3f dirLightSpeColor = dirLightColor.mul(0.5f, new Vector3f());
+        glUniform3f(dirLightAmbLoc, dirLightAmbColor.x, dirLightAmbColor.y, dirLightAmbColor.z);
+        glUniform3f(dirLightDifLoc, dirLightDifColor.x, dirLightDifColor.y, dirLightDifColor.z);
+        glUniform3f(dirLightSpeLoc, dirLightSpeColor.x, dirLightSpeColor.y, dirLightSpeColor.z);
+
+
+        Vector3f pointLightColor = new Vector3f(1.0f, 1.0f, 1.0f);
+        Vector3f pointLightAmbColor = pointLightColor.mul(0.1f, new Vector3f());
+        Vector3f pointLightDifColor = pointLightColor.mul(0.4f, new Vector3f());
+        Vector3f pointLightSpeColor = pointLightColor.mul(0.5f, new Vector3f());
 
         for (int i = 0; i < pointLightPositions.length; i++) {
             int pointPosLoc = glGetUniformLocation(lightingShader.programId, "pointLights[" + i + "].position");
@@ -246,15 +256,41 @@ public class Main {
             int pointLinLoc = glGetUniformLocation(lightingShader.programId, "pointLights[" + i + "].linear");
             int pointQuaLoc = glGetUniformLocation(lightingShader.programId, "pointLights[" + i + "].quadratic");
 
-
             glUniform3f(pointPosLoc, pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z);
-            glUniform3f(pointAmbLoc, 0.05f, 0.05f, 0.05f);
-            glUniform3f(pointDifLoc, 0.8f, 0.8f, 0.8f);
-            glUniform3f(pointSpeLoc, 1.0f, 1.0f, 1.0f);
+            glUniform3f(pointAmbLoc, pointLightAmbColor.x, pointLightAmbColor.y, pointLightAmbColor.z);
+            glUniform3f(pointDifLoc, pointLightDifColor.x, pointLightDifColor.y, pointLightDifColor.z);
+            glUniform3f(pointSpeLoc, pointLightSpeColor.x, pointLightSpeColor.y, pointLightSpeColor.z);
             glUniform1f(pointConLoc, 1.0f);
             glUniform1f(pointLinLoc, 0.09f);
             glUniform1f(pointQuaLoc, 0.032f);
         }
+
+        int spotLightPosLoc = glGetUniformLocation(lightingShader.programId, "spotLight.position");
+        int spotLightDirLoc = glGetUniformLocation(lightingShader.programId, "spotLight.direction");
+        int spotLightCutOffLoc = glGetUniformLocation(lightingShader.programId, "spotLight.cutOff");
+        int spotLightOuterOffLoc = glGetUniformLocation(lightingShader.programId, "spotLight.outerCutOff");
+        int spotLightConstLoc = glGetUniformLocation(lightingShader.programId, "spotLight.constant");
+        int spotLightLinLoc = glGetUniformLocation(lightingShader.programId, "spotLight.linear");
+        int spotLightQuadLoc = glGetUniformLocation(lightingShader.programId, "spotLight.quadratic");
+        int spotLightAmbLoc = glGetUniformLocation(lightingShader.programId, "spotLight.ambient");
+        int spotLightDifLoc = glGetUniformLocation(lightingShader.programId, "spotLight.diffuse");
+        int spotLightSpeLoc = glGetUniformLocation(lightingShader.programId, "spotLight.specular");
+
+        Vector3f spotLightColor = new Vector3f(1.0f, 0.0f, 1.0f);
+        Vector3f spotLightAmbColor = spotLightColor.mul(0.2f, new Vector3f());
+        Vector3f spotLightDifColor = spotLightColor.mul(0.5f, new Vector3f());
+        Vector3f spotLightSpeColor = spotLightColor.mul(1.0f, new Vector3f());
+
+        glUniform3f(spotLightPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
+        glUniform3f(spotLightDirLoc, camera.Front.x, camera.Front.y, camera.Front.z);
+        glUniform1f(spotLightCutOffLoc, (float) Math.cos(Math.toRadians(12.5f)));
+        glUniform1f(spotLightOuterOffLoc, (float) Math.cos(Math.toRadians(17.5f)));
+        glUniform1f(spotLightConstLoc, 1.0f);
+        glUniform1f(spotLightLinLoc, 0.09f);
+        glUniform1f(spotLightQuadLoc, 0.032f);
+        glUniform3f(spotLightAmbLoc, spotLightAmbColor.x, spotLightAmbColor.y, spotLightAmbColor.z);
+        glUniform3f(spotLightDifLoc, spotLightDifColor.x, spotLightDifColor.y, spotLightDifColor.z);
+        glUniform3f(spotLightSpeLoc, spotLightSpeColor.x, spotLightSpeColor.y, spotLightSpeColor.z);
 
         float[] data = new float[16];
 
@@ -271,9 +307,9 @@ public class Main {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureDiffuse);
         glActiveTexture(GL_TEXTURE1);
-        //glBindTexture(GL_TEXTURE_2D, textureSpecular);
-        //glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, textureMatrix);
+        glBindTexture(GL_TEXTURE_2D, textureSpecular);
+        glActiveTexture(GL_TEXTURE2);
+        //glBindTexture(GL_TEXTURE_2D, textureMatrix);
         //glBindTexture(GL_TEXTURE_2D, -1);
 
         glBindVertexArray(VAO);
@@ -297,9 +333,11 @@ public class Main {
         modelLoc = glGetUniformLocation(lampShader.programId, "model");
         viewLoc = glGetUniformLocation(lampShader.programId, "view");
         projLoc = glGetUniformLocation(lampShader.programId, "projection");
+        int lampColorLoc = glGetUniformLocation(lampShader.programId, "lampColor");
 
         glUniformMatrix4fv(projLoc, false, projection.get(data));
         glUniformMatrix4fv(viewLoc, false, view.get(data));
+        glUniform3f(lampColorLoc, pointLightColor.x, pointLightColor.y, pointLightColor.z);
 
         glBindVertexArray(lightVAO);
         for (int i = 0; i < pointLightPositions.length; i++) {
@@ -309,7 +347,6 @@ public class Main {
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
         glBindVertexArray(0);
-
     }
 
     private boolean firstMouse = true;
@@ -326,18 +363,27 @@ public class Main {
         lastX = xpos;
         lastY = ypos;
 
-        camera.ProcessMouseMovement(xOffset, yOffset);
+        if (moveMouse)
+            camera.ProcessMouseMovement(xOffset, yOffset);
     }
 
     public void scrollCallback(long window, double xoffset, double yoffset) {
         camera.ProcessMouseScroll((float) yoffset);
     }
 
+    private boolean moveMouse = false;
+
     public void movement(float deltaTime) {
-        if(keys[GLFW_KEY_P])
+        if (keys[GLFW_KEY_P])
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        if(keys[GLFW_KEY_O])
+        if (keys[GLFW_KEY_O])
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        if (keys[GLFW_KEY_M])
+            moveMouse = true;
+
+        if (keys[GLFW_KEY_N])
+            moveMouse = false;
 
         if (keys[GLFW_KEY_W])
             camera.ProcessKeyboard(Camera.Camera_Movement.FORWARD, deltaTime);
