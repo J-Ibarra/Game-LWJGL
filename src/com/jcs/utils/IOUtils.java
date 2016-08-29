@@ -7,6 +7,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.lang.Thread.currentThread;
 import static java.nio.file.Files.isReadable;
@@ -37,7 +39,8 @@ public class IOUtils {
         }
     }
 
-    public static String ioReadFileAsString(String resource) throws IOException {
+    public static String ioReadFileAsString(String resource) {
+
         try {
             StringBuilder result = new StringBuilder();
             BufferedReader br = new BufferedReader(
@@ -47,6 +50,22 @@ public class IOUtils {
                 result.append(line).append('\n');
             br.close();
             return result.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("could not load resource: " + resource, e.getCause());
+        }
+    }
+
+    public static List<String> readAllLines(String resource) {
+        List<String> list = new ArrayList<>();
+        try {
+            BufferedReader br = new BufferedReader(
+                    new InputStreamReader(currentThread().getContextClassLoader().getResourceAsStream(resource)));
+            String line;
+            while ((line = br.readLine()) != null) {
+                list.add(line);
+            }
+
+            return list;
         } catch (Exception e) {
             throw new RuntimeException("could not load resource: " + resource, e.getCause());
         }
