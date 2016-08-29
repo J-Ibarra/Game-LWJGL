@@ -53,6 +53,7 @@ public class Main {
     int textureRock = -1;
 
     private void init() throws Exception {
+        double initTime = glfwGetTime();
         glEnable(GL_DEPTH_TEST);
 
         shader = new ShaderProgram();
@@ -109,8 +110,15 @@ public class Main {
         fb.flip();
 
         glBufferData(GL_ARRAY_BUFFER, fb, GL_STATIC_DRAW);
-        glVertexAttribPointer(3, 16, GL_FLOAT, false, 2 * 16, 0);
         glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 4, GL_FLOAT, false, 4 * 16, 0);
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 4, GL_FLOAT, false, 4 * 16, 4 * 4);
+        glEnableVertexAttribArray(5);
+        glVertexAttribPointer(5, 4, GL_FLOAT, false, 4 * 16, 4 * 8);
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, false, 4 * 16, 4 * 12);
+
 
         glVertexAttribDivisor(3, 1);
         glVertexAttribDivisor(4, 1);
@@ -122,12 +130,15 @@ public class Main {
 
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        System.out.println(glfwGetTime() - initTime);
+        glfwShowWindow(window);
     }
 
     Random random = new Random();
-    int amount = 20000;
+    int amount = 100000;
     Matrix4f[] modelMatrices = new Matrix4f[amount];
-    float radius = 50.0f;
+    float radius = 100.0f;
     float offset = 2.5f;
 
     private void update(float deltaTime) {
@@ -146,7 +157,7 @@ public class Main {
 
         float[] data = new float[16];
 
-        projection.identity().perspective(camera.Zoom, (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
+        projection.identity().perspective(camera.Zoom, (float) WIDTH / (float) HEIGHT, 0.1f, 1000.0f);
         glUniformMatrix4fv(projLoc, false, projection.get(data));
 
         view = camera.getViewMatrix();
@@ -160,31 +171,31 @@ public class Main {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texturePlanet);
 
-        planet.render();
+        glBindVertexArray(planet.getVaoId());
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+
+        glDrawElements(GL_TRIANGLES, planet.getVertexCount(), GL_UNSIGNED_INT, 0);
 
 
-        /*instanceShader.bind();
+        instanceShader.bind();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureRock);
         viewLoc = glGetUniformLocation(shader.programId, "view");
         projLoc = glGetUniformLocation(shader.programId, "projection");
         textLoc = glGetUniformLocation(shader.programId, "texture");
-
         glUniformMatrix4fv(projLoc, false, projection.get(data));
-
         glUniformMatrix4fv(viewLoc, false, view.get(data));
-
         glUniform1i(textLoc, 0);
+        glBindVertexArray(rock.getVaoId());
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureRock);*/
+        glDrawElementsInstanced(GL_TRIANGLES, rock.getVertexCount(), GL_UNSIGNED_INT, 0, amount);
 
-
-        // Draw meteorites
-        for (int i = 0; i < amount; i++) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, textureRock);
-            glUniformMatrix4fv(modelLoc, false, modelMatrices[i].get(data));
-            rock.render();
-        }
     }
 
     private boolean firstMouse = true;
@@ -282,7 +293,7 @@ public class Main {
         glfwSwapInterval(1);
 
         // Make the window visible
-        glfwShowWindow(window);
+        //glfwShowWindow(window);
 
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
