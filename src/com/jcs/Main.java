@@ -20,6 +20,7 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 import static org.lwjgl.opengl.GL31.glDrawArraysInstanced;
+import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Main {
@@ -98,6 +99,17 @@ public class Main {
         glVertexAttribPointer(1, 3, GL_FLOAT, false, vertexFloatSizeInBytes, byteOffset);
         glEnableVertexAttribArray(1);
 
+        VBO = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        fb = BufferUtils.createFloatBuffer(translations.length * 2);
+        for (int i = 0; i < translations.length; i++)
+        fb.put(translations[i].x).put(translations[i].y);
+        fb.flip();
+        glBufferData(GL_ARRAY_BUFFER, fb, GL_STATIC_DRAW);
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, 2 * 4, 0);
+        glVertexAttribDivisor(2, 1);
+        glEnableVertexAttribArray(2);
+
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
@@ -127,10 +139,9 @@ public class Main {
         shaderProgram.bind();
 
 
-
         glBindVertexArray(VAO);
 
-        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 3);
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);
 
         glBindVertexArray(0);
 
