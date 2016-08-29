@@ -308,8 +308,8 @@ public class Main {
         glBindTexture(GL_TEXTURE_2D, textureDiffuse);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, textureSpecular);
-        glActiveTexture(GL_TEXTURE2);
-        //glBindTexture(GL_TEXTURE_2D, textureMatrix);
+        //glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, textureMatrix);
         //glBindTexture(GL_TEXTURE_2D, -1);
 
         glBindVertexArray(VAO);

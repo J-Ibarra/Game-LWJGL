@@ -15,8 +15,6 @@ public class Camera {
         RIGHT
     }
 
-    ;
-
     // Camera Attributes
     public Vector3f Position;
     public Vector3f Front;
