@@ -208,7 +208,7 @@ public class Main {
         float[] data = new float[16];
 
         // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-        projection.identity().perspective(camera.Zoom, (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
+        projection.identity().perspective((float) Math.toRadians(camera.Zoom), (float) WIDTH / (float) HEIGHT, 0.1f, 100.0f);
         glUniformMatrix4fv(projLoc, false, projection.get(data));
 
         view = camera.getViewMatrix();
